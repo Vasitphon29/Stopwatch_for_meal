@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>นาฬิกาจับเวลากินช้า & เคี้ยวละเอียด (0-60 นาที)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tone.js สำหรับสร้างเสียงแจ้งเตือนและเสียงจังหวะเคี้ยวแบบนุ่มนวล -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Google Fonts: Prompt (ฟอนต์ปกติอ่านง่ายสำหรับหน้าปัดและเนื้อหา) และ Orbitron + Share Tech Mono (ฟอนต์ดิจิตอล) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Prompt:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/seven-segment" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <style>
+    /* ตั้งค่าฟอนต์หลักเป็นฟอนต์ปกติ (Sans-serif) ที่อ่านง่าย บนพื้นหลังสีดำสนิท */
+    body {
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #000000;
+      color: #f4f4f5;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ฟอนต์สำหรับตัวเลขบนหน้าปัดมาตรวัด (ฟอนต์ปกติ คมชัด อ่านง่าย) */
+    .gauge-dial-font {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 400;
+      font-size: 0.75rem;
+    }
+
+    /* ฟอนต์สไตล์ดิจิตอลสำหรับจอแสดงเวลา MM:SS */
+    .digital-clock-font {
+      font-size: 4.5rem;
+      font-family: 'Digital-7 mono', 'Share Tech Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.08em;
+    }
+
+    /* เอฟเฟกต์จอดิจิตอลสีดำสนิทเรืองแสงคมชัด */
+    .digital-screen {
+      background: #000000;
+      box-shadow: inset 0 2px 12px rgba(255, 255, 255, 0.04), 0 0 0 1px #27272a;
+      border: 1.5px solid #27272a;
+    }
+
+    .digital-glow {
+      text-shadow: 0 0 14px rgba(52, 211, 153, 0.65);
+    }
+
+    /* ขอบหน้าปัดมาตรวัดสีดำสนิทตัดเส้นขอบเทาเข้ม */
+    .gauge-bezel {
+      background: #000000;
+      box-shadow:
+        0 0 0 1px #27272a,
+        inset 0 0 24px rgba(255, 255, 255, 0.03);
+    }
+
+    /* แอนิเมชันจังหวะเคี้ยว */
+    @keyframes chewPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+    }
+    .chew-active {
+      animation: chewPulse 0.75s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-black text-zinc-100 flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- แถบส่วนหัว (Header) พื้นหลังสีดำสนิท -->
+  <header class="w-full bg-black border-b border-zinc-800 sticky top-0 z-20">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-black border border-emerald-500/50 flex items-center justify-center text-emerald-400">
+          <!-- ไอคอนช้อนส้อมและนาฬิกา -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <polyline points="12 7 12 12 15 14"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold text-white leading-tight">กินช้า เคี้ยวละเอียด</h1>
+          <p class="text-xs text-zinc-400">มาตรวัดเวลาทานอาหารเพื่อสุขภาพกระเพาะ (0-60 นาที)</p>
+        </div>
+      </div>
+
+      <!-- สวิตช์เปิด/ปิดเสียงแจ้งเตือน -->
+      <button id="soundToggleBtn" type="button" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-black hover:bg-zinc-900 text-zinc-200 transition border border-zinc-800 cursor-pointer" title="เปิดหรือปิดเสียงแจ้งเตือนเมื่อเข้าสู่ช่วงเวลาสำคัญ">
+        <span id="soundIconOn">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+        </span>
+        <span id="soundIconOff" class="hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </span>
+        <span id="soundLabel">เสียงแจ้งเตือน: เปิด</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- พื้นที่เนื้อหาหลัก (Main Content) พื้นหลังสีดำสนิท -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-5 sm:py-7 bg-black">
+    <!-- กล่องข้อความแจ้งเตือนแบบนุ่มนวล (Toast Notification แทน alert) -->
+    <div id="toastBanner" class="hidden mb-4 px-4 py-3 rounded-2xl bg-black border border-emerald-500/60 text-emerald-300 flex items-center justify-between transition-all">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <p id="toastMessage" class="text-sm font-medium">เข้าสู่ช่วงเวลาสำคัญของการย่อยอาหารแล้ว</p>
+      </div>
+      <button id="closeToastBtn" class="text-emerald-400 hover:text-white text-xs font-semibold px-2.5 py-1 rounded-lg border border-zinc-800">ปิด</button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- คอลัมน์ซ้าย: หน้าปัดมาตรวัด 0-60 นาที (7 ส่วน) พื้นหลังสีดำสนิท -->
+      <section class="lg:col-span-7 bg-black rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col items-center">
+        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">มาตรวัดระยะเวลามื้ออาหาร</span>
+          <span id="zoneBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-black text-orange-400 border border-orange-500/60">
+            โซน 0-10 นาที : เริ่มต้น & เคี้ยวละเอียด
+          </span>
+        </div>
+
+        <!-- SVG หน้าปัดมาตรวัดแบบวงกลม (270 องศา สไตล์ Speedometer/Gauge อ่านง่าย 0-60 นาที) -->
+        <div class="w-full max-w-[430px] aspect-square relative flex items-center justify-center my-1">
+          <div class="w-full h-full rounded-full gauge-bezel p-2.5 sm:p-3.5 border border-zinc-800 flex items-center justify-center">
+            <svg id="gaugeSvg" viewBox="0 0 400 400" class="w-full h-full overflow-visible select-none">
+              <defs>
+                <!-- เงาสำหรับเข็มสีแดง -->
+                <filter id="needleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.85" />
+                </filter>
+                <!-- ไล่ระดับสีหัวหมุดตรงกลางให้กลมกลืนกับพื้นดำ -->
+                <radialGradient id="centerCapGrad" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#3f3f46" />
+                  <stop offset="65%" stop-color="#18181b" />
+                  <stop offset="100%" stop-color="#000000" />
+                </radialGradient>
+              </defs>
+
+              <!-- วงพื้นหลังหน้าปัดด้านในสีดำสนิท -->
+              <circle cx="200" cy="200" r="184" fill="#000000" stroke="#27272a" stroke-width="1.5" />
+
+              <!-- กลุ่มแสดงแถบโซนสี (สร้างด้วย JS) -->
+              <g id="gaugeZonesGroup"></g>
+
+              <!-- กลุ่มแสดงขีดสเกลและตัวเลข 0 - 60 (ใช้ฟอนต์ปกติ สีขาวสว่าง) -->
+              <g id="gaugeTicksGroup"></g>
+
+              <!-- ข้อความกำกับกลางหน้าปัด (ฟอนต์ปกติ) -->
+              <text x="200" y="138" text-anchor="middle" class="fill-zinc-400 text-[11px] font-medium tracking-wide">นาที (MINUTES)</text>
+              <text x="200" y="292" text-anchor="middle" class="fill-zinc-300 text-[10px] font-semibold">เป้าหมายอิ่มพอดี : 20-30 นาที</text>
+
+              <!-- เข็มมาตรวัดสีแดงสด (Red Needle) -->
+              <g id="needleGroup" filter="url(#needleShadow)" transform="rotate(-135 200 200)">
+                <!-- หางเข็ม -->
+                <polygon points="195,200 205,200 203,234 197,234" fill="#991b1b" />
+                <!-- ตัวเข็มสีแดงสด -->
+                <polygon points="194.5,200 205.5,200 201.4,44 198.6,44" fill="#ef4444" />
+                <!-- สันเงาเข็มให้ดูมีมิติ -->
+                <polygon points="200,200 205.5,200 201.4,44 200,44" fill="#dc2626" />
+              </g>
+
+              <!-- จุดหมุนตรงกลางเข็ม (Center Pivot Cap) -->
+              <circle cx="200" cy="200" r="17" fill="url(#centerCapGrad)" stroke="#52525b" stroke-width="2" />
+              <circle cx="200" cy="200" r="6" fill="#ef4444" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- คำอธิบายโซนสี 4 ช่วงใต้หน้าปัด (พื้นหลังสีดำสนิทตัดขอบสีตามโซน) -->
+        <div class="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 pt-3 border-t border-zinc-800">
+          <div class="flex items-center gap-2 p-2 rounded-xl bg-black border border-orange-500/40">
+            <span class="w-3 h-3 rounded-full bg-orange-500 shrink-0"></span>
+            <div class="leading-tight">
+              <div class="text-[11px] font-bold text-zinc-100">0–10 นาที</div>
+              <div class="text-[10px] text-zinc-400">เริ่มกิน เคี้ยวช้าๆ</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-2 rounded-xl bg-black border border-yellow-400/40">
+            <span class="w-3 h-3 rounded-full bg-yellow-400 shrink-0"></span>
+            <div class="leading-tight">
+              <div class="text-[11px] font-bold text-zinc-100">10–20 นาที</div>
+              <div class="text-[10px] text-zinc-400">สมองเริ่มรับรู้</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-2 rounded-xl bg-black border border-emerald-500/40">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+            <div class="leading-tight">
+              <div class="text-[11px] font-bold text-zinc-100">20–30 นาที</div>
+              <div class="text-[10px] text-zinc-400">อิ่มพอดี ไม่หนักท้อง</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-2 rounded-xl bg-black border border-sky-500/40">
+            <span class="w-3 h-3 rounded-full bg-sky-500 shrink-0"></span>
+            <div class="leading-tight">
+              <div class="text-[11px] font-bold text-zinc-100">30–60 นาที</div>
+              <div class="text-[10px] text-zinc-400">พักย่อย / ทานต่อเนื่อง</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- คอลัมน์ขวา: จอดิจิตอล ปุ่มควบคุม คำแนะนำสุขภาพ และตัวช่วยนับการเคี้ยว (5 ส่วน) -->
+      <section class="lg:col-span-5 flex flex-col gap-4">
+
+        <!-- 1. จอแสดงผลตัวเลขดิจิตอล (Digital Display) และปุ่มควบคุม พื้นหลังสีดำสนิท -->
+        <div class="bg-black rounded-3xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-zinc-400">เวลาที่รับประทานไปแล้ว (นาที : วินาที)</span>
+            <span id="statusIndicator" class="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+              <span id="statusDot" class="w-2 h-2 rounded-full bg-zinc-500"></span>
+              <span id="statusText">พร้อมเริ่มมื้ออาหาร</span>
+            </span>
+          </div>
+
+          <!-- หน้าจอตัวเลขดิจิตอล (ใช้ฟอนต์ดิจิตอลชัดเจน บนพื้นสีดำสนิท) -->
+          <div class="digital-screen rounded-2xl py-4 px-5 flex flex-col items-center justify-center relative overflow-hidden">
+            <div class="flex items-baseline justify-center gap-1">
+              <span id="digitalTime" class="digital-clock-font digital-glow text-9xl sm:text-9xl font-regular text-amber-800 tracking-wider">00:00</span>
+            </div>
+            <div class="w-full flex justify-between items-center mt-2 pt-2 border-t border-zinc-800 text-[11px] text-zinc-400">
+              <span>เป้าหมาย: <strong class="text-emerald-400">20:00+</strong></span>
+              <span id="digitalPercent">ความคืบหน้าสู่จุดอิ่ม: 0%</span>
+            </div>
+          </div>
+
+          <!-- ปุ่มควบคุมขนาดใหญ่ กดง่าย -->
+          <div class="grid grid-cols-3 gap-2.5 mt-4">
+            <button id="startBtn" type="button" class="col-span-2 py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer">
+              <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+              <span id="startBtnText">เริ่มจับเวลา</span>
+            </button>
+
+            <button id="resetBtn" type="button" class="py-3.5 px-3 rounded-2xl bg-black hover:bg-zinc-900 active:scale-[0.99] text-zinc-200 font-semibold text-sm border border-zinc-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              <span>รีเซ็ต</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. การ์ดคำแนะนำสุขภาพและสถานะกระเพาะแบบเรียลไทม์ พื้นหลังสีดำสนิท -->
+        <div id="adviceCard" class="rounded-3xl p-5 bg-black border border-orange-500/60 transition-colors duration-500">
+          <div class="flex items-start gap-3">
+            <div id="adviceIconBox" class="w-10 h-10 rounded-2xl bg-orange-500 text-black flex items-center justify-center shrink-0 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4"></path>
+                <path d="M12 18v4"></path>
+                <path d="M4.93 4.93l2.83 2.83"></path>
+                <path d="M16.24 16.24l2.83 2.83"></path>
+                <path d="M2 12h4"></path>
+                <path d="M18 12h4"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 id="adviceTitle" class="text-sm sm:text-base font-bold text-white">ช่วงเริ่มต้น (0–10 นาที) : วางช้อนระหว่างเคี้ยว</h2>
+              <p id="adviceDesc" class="text-xs sm:text-sm text-zinc-300 mt-1 leading-relaxed">
+                ช่วง 10 นาทีแรกคนมักหิวและเผลอกินเร็ว แนะนำให้ตักอาหารคำพอดีคำ <strong class="text-white">วางช้อนส้อมลง</strong> และเคี้ยวให้ละเอียด <strong class="text-white">20–30 ครั้งต่อคำ</strong> เพื่อช่วยกระเพาะย่อยอาหารได้ง่ายขึ้น
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. ตัวช่วยนับจังหวะการเคี้ยว (Chew Pacer 1-30 ครั้งต่อคำ) พื้นหลังสีดำสนิท -->
+        <div class="bg-black rounded-3xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-white">ตัวช่วยนับจังหวะเคี้ยว (1–30 ครั้ง/คำ)</h3>
+              <p class="text-xs text-zinc-400">ฝึกเคี้ยวให้ละเอียดก่อนกลืน ลดภาระกระเพาะ</p>
+            </div>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-zinc-300 bg-black px-2.5 py-1.5 rounded-xl border border-zinc-800 hover:border-zinc-700">
+              <input id="chewTickSoundCheckbox" type="checkbox" class="rounded bg-black border-zinc-700 text-emerald-500 focus:ring-emerald-500" />
+              <span>เสียงติ๊กเบาๆ</span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- วงกลมแสดงจำนวนครั้งที่เคี้ยวในคำปัจจุบัน -->
+            <div id="chewCircle" class="w-16 h-16 rounded-2xl bg-black border-2 border-zinc-800 flex flex-col items-center justify-center shrink-0 transition-colors">
+              <span id="chewCountDisplay" class="digital-clock-font text-4xl font-regular text-white">0</span>
+              <span class="text-[10px] text-zinc-400 font-medium">/ 30 ครั้ง</span>
+            </div>
+
+            <div class="flex-grow flex flex-col gap-2">
+              <!-- แถบความคืบหน้าการเคี้ยว -->
+              <div class="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+                <div id="chewProgressBar" class="h-full bg-amber-500 transition-all duration-200 rounded-full" style="width: 0%"></div>
+              </div>
+              <div id="chewStatusText" class="text-xs text-zinc-300 font-medium">
+                กด "เริ่มคำใหม่" เมื่อตักอาหารเข้าปาก
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5 mt-3.5">
+            <button id="chewStartBiteBtn" type="button" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.99] text-black text-xs sm:text-sm font-bold transition cursor-pointer">
+              🍚 เริ่มคำใหม่ (นับ 1–30)
+            </button>
+            <button id="chewStopBiteBtn" type="button" class="py-2.5 px-3 rounded-xl bg-black hover:bg-zinc-900 text-zinc-300 text-xs sm:text-sm font-medium border border-zinc-700 transition cursor-pointer">
+              กลืนแล้ว / หยุดนับคำ
+            </button>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- ส่วนท้าย (Footer) พื้นหลังสีดำสนิท -->
+  <footer class="w-full bg-black text-center py-4 px-4 text-xs text-zinc-500 border-t border-zinc-800/80 mt-4">
+    เคล็ดลับสุขภาพ: สมองใช้เวลาประมาณ <strong class="text-zinc-300">15–20 นาที</strong> ในการหลั่งฮอร์โมนเลปติน (Leptin) เพื่อส่งสัญญาณความอิ่ม การเคี้ยวช้าๆ ช่วยลดอาการท้องอืดและกรดไหลย้อน
+  </footer>
+
+  <script>
+    /**
+     * ระบบนาฬิกาจับเวลานับขึ้น 0-60 นาที สำหรับฝึกกินช้าและเคี้ยวละเอียด
+     * - สร้างหน้าปัดมาตรวัด 270 องศา (ตั้งแต่ -135 องศา ถึง +135 องศา)
+     * - ตัวเลขบนหน้าปัดใช้ฟอนต์ปกติ (Prompt) และจอดิจิตอลใช้ฟอนต์ดิจิตอล (Orbitron)
+     * - มีตัวช่วยนับจังหวะการเคี้ยว 1-30 ครั้งต่อคำ และเสียงแจ้งเตือนผ่าน Tone.js
+     */
+
+    // ==========================================
+    // 1. การตั้งค่าตัวแปรและสถานะ (State)
+    // ==========================================
+    const MAX_SECONDS = 60 * 60; // 60 นาที = 3,600 วินาที
+    const START_ANGLE = -135;    // มุมเริ่มต้น (0 นาที)
+    const END_ANGLE = 135;       // มุมสิ้นสุด (60 นาที)
+    const TOTAL_SWEEP = 270;     // กวาดมุมทั้งหมด 270 องศา
+
+    let isRunning = false;
+    let startTime = null;
+    let elapsedBeforePause = 0; // มิลลิวินาทีสะสม
+    let animationFrameId = null;
+
+    // สถานะเสียงแจ้งเตือน
+    let soundEnabled = true;
+    let notified10Min = false;
+    let notified15Min = false;
+    let notified20Min = false;
+    let notified30Min = false;
+
+    // สถานะตัวช่วยนับจังหวะการเคี้ยว (Chew Pacer)
+    let chewInterval = null;
+    let chewCount = 0;
+    const CHEW_TARGET = 30;
+    const CHEW_INTERVAL_MS = 750; // จังหวะเคี้ยวประมาณ 1 ครั้งต่อ 0.75 วินาที (กำลังพอดี ไม่ช้าหรือเร็วเกินไป)
+
+    // ==========================================
+    // 2. อ้างอิง DOM Elements
+    // ==========================================
+    const gaugeZonesGroup = document.getElementById('gaugeZonesGroup');
+    const gaugeTicksGroup = document.getElementById('gaugeTicksGroup');
+    const needleGroup = document.getElementById('needleGroup');
+
+    const digitalTime = document.getElementById('digitalTime');
+    const digitalPercent = document.getElementById('digitalPercent');
+    const zoneBadge = document.getElementById('zoneBadge');
+
+    const startBtn = document.getElementById('startBtn');
+    const startBtnText = document.getElementById('startBtnText');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    const adviceCard = document.getElementById('adviceCard');
+    const adviceIconBox = document.getElementById('adviceIconBox');
+    const adviceTitle = document.getElementById('adviceTitle');
+    const adviceDesc = document.getElementById('adviceDesc');
+
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundIconOn = document.getElementById('soundIconOn');
+    const soundIconOff = document.getElementById('soundIconOff');
+    const soundLabel = document.getElementById('soundLabel');
+
+    const toastBanner = document.getElementById('toastBanner');
+    const toastMessage = document.getElementById('toastMessage');
+    const closeToastBtn = document.getElementById('closeToastBtn');
+
+    // Elements ตัวช่วยนับการเคี้ยว
+    const chewCircle = document.getElementById('chewCircle');
+    const chewCountDisplay = document.getElementById('chewCountDisplay');
+    const chewProgressBar = document.getElementById('chewProgressBar');
+    const chewStatusText = document.getElementById('chewStatusText');
+    const chewStartBiteBtn = document.getElementById('chewStartBiteBtn');
+    const chewStopBiteBtn = document.getElementById('chewStopBiteBtn');
+    const chewTickSoundCheckbox = document.getElementById('chewTickSoundCheckbox');
+
+    // ==========================================
+    // 3. ระบบเสียงสังเคราะห์ด้วย Tone.js
+    // ==========================================
+    let chimeSynth = null;
+    let tickSynth = null;
+
+    function initAudio() {
+      try {
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        if (!chimeSynth) {
+          chimeSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.05, decay: 0.4, sustain: 0.2, release: 1.2 }
+          }).toDestination();
+          chimeSynth.volume.value = -8;
+        }
+        if (!tickSynth) {
+          tickSynth = new Tone.MembraneSynth({
+            pitchDecay: 0.01,
+            octaves: 2,
+            envelope: { attack: 0.002, decay: 0.08, sustain: 0 }
+          }).toDestination();
+          tickSynth.volume.value = -16;
+        }
+      } catch (err) {
+        console.warn('Audio init skipped:', err);
+      }
+    }
+
+    function playMilestoneChime(type = 'normal') {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!chimeSynth) return;
+      const now = Tone.now();
+      if (type === 'golden') {
+        // เสียงระฆังนุ่มนวล 3 โน้ตเมื่อเข้าสู่ช่วงเวลาทอง 20 นาที
+        chimeSynth.triggerAttackRelease('C5', '8n', now);
+        chimeSynth.triggerAttackRelease('E5', '8n', now + 0.18);
+        chimeSynth.triggerAttackRelease('G5', '4n', now + 0.36);
+      } else {
+        // เสียงกระดิ่งเบาๆ 2 โน้ต
+        chimeSynth.triggerAttackRelease('E5', '8n', now);
+        chimeSynth.triggerAttackRelease('A5', '4n', now + 0.2);
+      }
+    }
+
+    function playChewTick(isDone = false) {
+      if (!chewTickSoundCheckbox.checked && !isDone) return;
+      if (isDone && !soundEnabled) return;
+      initAudio();
+      if (isDone && chimeSynth) {
+        chimeSynth.triggerAttackRelease('G5', '16n', Tone.now());
+      } else if (tickSynth) {
+        tickSynth.triggerAttackRelease('C3', '32n', Tone.now());
+      }
+    }
+
+    // ==========================================
+    // 4. วาดหน้าปัดมาตรวัด 0-60 นาที (SVG Gauge)
+    // ==========================================
+    function polarToCartesian(cx, cy, r, angleInDegrees) {
+      // แปลงองศาเข็มนาฬิกา (0 คือด้านบน 12 นาฬิกา) เป็นพิกัด X, Y
+      const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+      return {
+        x: cx + r * Math.cos(angleInRadians),
+        y: cy + r * Math.sin(angleInRadians)
+      };
+    }
+
+    function describeArc(cx, cy, r, startAngle, endAngle) {
+      const start = polarToCartesian(cx, cy, r, endAngle);
+      const end = polarToCartesian(cx, cy, r, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+      return ['M', start.x, start.y, 'A', r, r, 0, largeArcFlag, 0, end.x, end.y].join(' ');
+    }
+
+    function renderGaugeDial() {
+      const cx = 200;
+      const cy = 200;
+      const zoneRadius = 158;
+      const zoneWidth = 22;
+
+      // ข้อมูล 4 โซนสีบนหน้าปัด (0-10, 10-20, 20-30, 30-60 นาที)
+      const zones = [
+        { startMin: 0, endMin: 10, color: '#FF8E80' },  // แดง (เริ่มต้น & เคี้ยวละเอียด)
+        { startMin: 10, endMin: 20, color: '#EDFF9E' }, // เหลืองอำพัน (สมองเริ่มรับรู้)
+        { startMin: 20, endMin: 30, color: '#6CFE9F' }, // เขียว (ช่วงเวลาทอง อิ่มพอดี)
+        { startMin: 30, endMin: 60, color: '#62F3F8' }  // ฟ้า (พักย่อย / ทานต่อเนื่อง)
+      ];
+
+      zones.forEach((zone) => {
+        const a1 = START_ANGLE + (zone.startMin / 60) * TOTAL_SWEEP;
+        const a2 = START_ANGLE + (zone.endMin / 60) * TOTAL_SWEEP;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', describeArc(cx, cy, zoneRadius, a1, a2));
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', zone.color);
+        path.setAttribute('stroke-width', zoneWidth);
+        path.setAttribute('stroke-opacity', '0.88');
+        gaugeZonesGroup.appendChild(path);
+      });
+
+      // วาดขีดแบ่งสเกลรายนาที (0 ถึง 60) และตัวเลขทุกๆ 5 นาที
+      for (let m = 0; m <= 60; m++) {
+        const angle = START_ANGLE + (m / 60) * TOTAL_SWEEP;
+        const isMajor = m % 5 === 0;
+
+        const outerR = 169;
+        const innerR = isMajor ? 147 : 158;
+
+        const p1 = polarToCartesian(cx, cy, outerR, angle);
+        const p2 = polarToCartesian(cx, cy, innerR, angle);
+
+        const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tick.setAttribute('x1', p1.x);
+        tick.setAttribute('y1', p1.y);
+        tick.setAttribute('x2', p2.x);
+        tick.setAttribute('y2', p2.y);
+        tick.setAttribute('stroke', isMajor ? '#ffffff' : '#71717a');
+        tick.setAttribute('stroke-width', isMajor ? '2.6' : '1.1');
+        tick.setAttribute('stroke-linecap', 'round');
+        gaugeTicksGroup.appendChild(tick);
+
+        // แสดงตัวเลขทุก 5 นาที (0, 5, 10, ..., 60) ด้วยฟอนต์ปกติสีขาวสว่างชัดเจนบนพื้นดำ
+        if (isMajor) {
+          const textR = 126;
+          const textPos = polarToCartesian(cx, cy, textR, angle);
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', textPos.x);
+          label.setAttribute('y', textPos.y);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('dominant-baseline', 'central');
+          label.setAttribute('class', 'gauge-dial-font fill-white text-[20px]');
+          label.textContent = m.toString();
+          gaugeTicksGroup.appendChild(label);
+        }
+      }
+    }
+
+    // ==========================================
+    // 5. อัปเดตการแสดงผลตามเวลาที่ผ่านไป
+    // ==========================================
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toastBanner.classList.remove('hidden');
+    }
+
+    function updateHealthGuidance(totalSeconds) {
+      const minutes = totalSeconds / 60;
+
+      // แจ้งเตือนเมื่อถึงจุดสำคัญ
+      if (minutes >= 10 && !notified10Min) {
+        notified10Min = true;
+        playMilestoneChime('normal');
+        showToast('ครบ 10 นาทีแล้ว! เยี่ยมมาก ค่อยๆ เคี้ยวต่อไป ร่างกายกำลังเริ่มส่งสัญญาณความอิ่ม');
+      }
+      if (minutes >= 15 && !notified15Min) {
+        notified15Min = true;
+        playMilestoneChime('normal');
+        showToast('ครบ 15 นาทีแล้ว! สมองเริ่มหลั่งฮอร์โมนความอิ่ม ลองสำรวจดูว่าเริ่มอิ่มหรือยัง');
+      }
+      if (minutes >= 20 && !notified20Min) {
+        notified20Min = true;
+        playMilestoneChime('golden');
+        showToast('ครบ 20 นาที (ช่วงเวลาทอง)! สมองรับรู้ความอิ่มเต็มที่แล้ว ช่วยให้กระเพาะไม่ทำงานหนัก');
+      }
+      if (minutes >= 30 && !notified30Min) {
+        notified30Min = true;
+        playMilestoneChime('normal');
+        showToast('ครบ 30 นาทีแล้ว! เข้าสู่ช่วงพักย่อย สามารถจิบน้ำอุ่นและนั่งพักผ่อนสบายๆ');
+      }
+
+      // อัปเดตการ์ดคำแนะนำและป้ายสถานะโซนสี (พื้นหลังสีดำสนิทตัดขอบสีตามโซน)
+      if (minutes < 10) {
+        zoneBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-black text-red-400 border border-red-500/60';
+        zoneBadge.textContent = 'โซน 0-10 นาที : เริ่มต้น & เคี้ยวละเอียด';
+
+        adviceCard.className = 'rounded-3xl p-5 bg-black border border-red-500/60 transition-colors duration-500';
+        adviceIconBox.className = 'w-10 h-10 rounded-2xl bg-red-500 text-black flex items-center justify-center shrink-0 mt-0.5';
+        adviceTitle.textContent = 'ช่วงเริ่มต้น (0–10 นาที) : วางช้อนระหว่างเคี้ยว';
+        adviceDesc.innerHTML = 'ช่วง 10 นาทีแรกคนมักหิวและเผลอกินเร็ว แนะนำให้ตักอาหารคำพอดีคำ <strong class="text-white">วางช้อนส้อมลง</strong> และเคี้ยวให้ละเอียด <strong class="text-white">20–30 ครั้งต่อคำ</strong> เพื่อช่วยกระเพาะย่อยอาหารได้ง่ายขึ้น';
+      } else if (minutes < 20) {
+        zoneBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-black text-yellow-300 border border-yellow-400/60';
+        zoneBadge.textContent = 'โซน 10-20 นาที : สมองเริ่มรับรู้ความอิ่ม';
+
+        adviceCard.className = 'rounded-3xl p-5 bg-black border border-yellow-400/60 transition-colors duration-500';
+        adviceIconBox.className = 'w-10 h-10 rounded-2xl bg-yellow-400 text-black flex items-center justify-center shrink-0 mt-0.5';
+        adviceTitle.textContent = 'ช่วงกลางมื้อ (10–20 นาที) : ฮอร์โมนความอิ่มเริ่มทำงาน';
+        adviceDesc.innerHTML = 'กระเพาะอาหารกำลังส่งสัญญาณไปยังสมอง <strong class="text-white">ลดจังหวะการตักให้ช้าลงอีกนิด</strong> สังเกตรสชาติอาหาร และหยุดพักหายใจเบาๆ ระหว่างคำ';
+      } else if (minutes < 30) {
+        zoneBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-black text-emerald-400 border border-emerald-500/60';
+        zoneBadge.textContent = 'โซน 20-30 นาที : ช่วงเวลาทอง อิ่มพอดี';
+
+        adviceCard.className = 'rounded-3xl p-5 bg-black border border-emerald-500/60 transition-colors duration-500';
+        adviceIconBox.className = 'w-10 h-10 rounded-2xl bg-emerald-500 text-black flex items-center justify-center shrink-0 mt-0.5';
+        adviceTitle.textContent = 'ช่วงเวลาทอง (20–30 นาที) : สมองรับรู้ความอิ่มเต็มที่';
+        adviceDesc.innerHTML = 'ยอดเยี่ยมมาก! ตอนนี้สมองรับรู้ความอิ่มสมบูรณ์แล้ว <strong class="text-white">หากรู้สึกอิ่มประมาณ 80% สามารถรวบช้อนได้เลย</strong> จะช่วยให้สบายท้อง ไม่แน่นหรือจุกหลังมื้ออาหาร';
+      } else {
+        zoneBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-black text-sky-400 border border-sky-500/60';
+        zoneBadge.textContent = 'โซน 30-60 นาที : พักย่อย / ทานต่อเนื่องช้าๆ';
+
+        adviceCard.className = 'rounded-3xl p-5 bg-black border border-sky-500/60 transition-colors duration-500';
+        adviceIconBox.className = 'w-10 h-10 rounded-2xl bg-sky-500 text-black flex items-center justify-center shrink-0 mt-0.5';
+        adviceTitle.textContent = 'ช่วงผ่อนคลาย (30–60 นาที) : พักย่อยและจิบน้ำอุ่น';
+        adviceDesc.innerHTML = 'หากทานมื้อใหญ่หรือสังสรรค์ <strong class="text-white">เน้นพูดคุยและเคี้ยวช้าๆ ต่อไป</strong> หลีกเลี่ยงการดื่มน้ำเย็นจัดปริมาณมากทันที เพื่อให้เอนไซม์ในกระเพาะทำงานได้เต็มประสิทธิภาพ';
+      }
+    }
+
+    function updateUI(elapsedMs) {
+      const totalSeconds = Math.min(elapsedMs / 1000, MAX_SECONDS);
+
+      // 1. หมุนเข็มสีแดงอย่างนุ่มนวลตามเวลาจริง (0 ถึง 60 นาที -> -135 ถึง +135 องศา)
+      const angle = START_ANGLE + (totalSeconds / MAX_SECONDS) * TOTAL_SWEEP;
+      needleGroup.setAttribute('transform', `rotate(${angle.toFixed(3)} 200 200)`);
+
+      // 2. อัปเดตตัวเลขบนหน้าจอดิจิตอล MM:SS
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = Math.floor(totalSeconds % 60);
+      const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      digitalTime.textContent = formattedTime;
+
+      // เปลี่ยนสีตัวเลขดิจิตอลให้สอดคล้องกับโซนเวลา
+      if (mins < 10) {
+        digitalTime.className = 'digital-clock-font digital-glow text-5xl sm:text-6xl  text-amber-400 tracking-wider';
+      } else if (mins < 20) {
+        digitalTime.className = 'digital-clock-font digital-glow text-5xl sm:text-6xl  text-yellow-300 tracking-wider';
+      } else if (mins < 30) {
+        digitalTime.className = 'digital-clock-font digital-glow text-5xl sm:text-6xl  text-emerald-400 tracking-wider';
+      } else {
+        digitalTime.className = 'digital-clock-font digital-glow text-5xl sm:text-6xl  text-sky-400 tracking-wider';
+      }
+
+      // อัปเดตเปอร์เซ็นต์สู่เป้าหมาย 20 นาที
+      const goalPct = Math.min(100, Math.round((totalSeconds / (20 * 60)) * 100));
+      digitalPercent.textContent = goalPct >= 100
+        ? 'บรรลุเป้าหมายอิ่มพอดี (20 นาที) แล้ว!'
+        : `ความคืบหน้าสู่จุดอิ่ม (20 นาที): ${goalPct}%`;
+
+      // 3. อัปเดตคำแนะนำสุขภาพ
+      updateHealthGuidance(totalSeconds);
+    }
+
+    function timerLoop(timestamp) {
+      if (!isRunning) return;
+      if (!startTime) startTime = timestamp;
+
+      const currentElapsed = elapsedBeforePause + (timestamp - startTime);
+      updateUI(currentElapsed);
+
+      if (currentElapsed >= MAX_SECONDS * 1000) {
+        pauseTimer();
+        statusText.textContent = 'ครบ 60 นาทีแล้ว';
+        return;
+      }
+
+      animationFrameId = requestAnimationFrame(timerLoop);
+    }
+
+    // ==========================================
+    // 6. การควบคุมปุ่ม Start / Pause / Reset
+    // ==========================================
+    function startTimer() {
+      if (isRunning) return;
+      initAudio();
+      isRunning = true;
+      startTime = performance.now();
+
+      startBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+      startBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+      startBtnText.textContent = 'หยุดชั่วคราว';
+      playIcon.classList.add('hidden');
+      pauseIcon.classList.remove('hidden');
+
+      statusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+      statusText.textContent = 'กำลังจับเวลามื้ออาหาร...';
+
+      animationFrameId = requestAnimationFrame(timerLoop);
+    }
+
+    function pauseTimer() {
+      if (!isRunning) return;
+      isRunning = false;
+      elapsedBeforePause += performance.now() - startTime;
+      startTime = null;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      startBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+      startBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      startBtnText.textContent = 'ดำเนินการต่อ';
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+
+      statusDot.className = 'w-2 h-2 rounded-full bg-amber-500';
+      statusText.textContent = 'หยุดชั่วคราว';
+    }
+
+    function resetTimer() {
+      isRunning = false;
+      startTime = null;
+      elapsedBeforePause = 0;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      notified10Min = false;
+      notified15Min = false;
+      notified20Min = false;
+      notified30Min = false;
+
+      startBtn.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+      startBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+      startBtnText.textContent = 'เริ่มจับเวลา';
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+
+      statusDot.className = 'w-2 h-2 rounded-full bg-zinc-500';
+      statusText.textContent = 'พร้อมเริ่มมื้ออาหาร';
+      toastBanner.classList.add('hidden');
+
+      stopChewPacer();
+      updateUI(0);
+    }
+
+    startBtn.addEventListener('click', () => {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    });
+
+    resetBtn.addEventListener('click', resetTimer);
+
+    // ==========================================
+    // 7. ตัวช่วยนับจังหวะการเคี้ยว (Chew Pacer 1-30)
+    // ==========================================
+    function stopChewPacer() {
+      if (chewInterval) {
+        clearInterval(chewInterval);
+        chewInterval = null;
+      }
+      chewCount = 0;
+      chewCountDisplay.textContent = '0';
+      chewProgressBar.style.width = '0%';
+      chewProgressBar.className = 'h-full bg-amber-500 transition-all duration-200 rounded-full';
+      chewCircle.classList.remove('chew-active', 'border-emerald-500', 'border-amber-400');
+      chewCircle.classList.add('border-zinc-800', 'bg-black');
+      chewStatusText.textContent = 'กด "เริ่มคำใหม่" เมื่อตักอาหารเข้าปาก';
+    }
+
+    function startNewBite() {
+      initAudio();
+      // ถ้ายังไม่เริ่มจับเวลามื้ออาหาร ให้เริ่มจับเวลาให้อัตโนมัติเพื่อความสะดวก
+      if (!isRunning && elapsedBeforePause === 0) {
+        startTimer();
+      }
+
+      if (chewInterval) clearInterval(chewInterval);
+      chewCount = 1;
+      updateChewDisplay();
+      playChewTick(false);
+
+      chewInterval = setInterval(() => {
+        chewCount++;
+        if (chewCount <= CHEW_TARGET) {
+          updateChewDisplay();
+          playChewTick(chewCount === CHEW_TARGET);
+        } else {
+          // ครบ 30 ครั้งแล้ว หยุดนับและแจ้งเตือนว่าพร้อมกลืน
+          clearInterval(chewInterval);
+          chewInterval = null;
+          chewCircle.classList.remove('chew-active');
+          chewStatusText.innerHTML = '<strong class="text-emerald-400">เคี้ยวละเอียดครบ 30 ครั้งแล้ว! พร้อมกลืนและพักวางช้อน</strong>';
+        }
+      }, CHEW_INTERVAL_MS);
+    }
+
+    function updateChewDisplay() {
+      chewCountDisplay.textContent = chewCount.toString();
+      const pct = Math.min(100, Math.round((chewCount / CHEW_TARGET) * 100));
+      chewProgressBar.style.width = `${pct}%`;
+
+      if (chewCount < 20) {
+        chewCircle.classList.add('chew-active', 'border-amber-400', 'bg-black');
+        chewCircle.classList.remove('border-zinc-800', 'border-emerald-500');
+        chewProgressBar.className = 'h-full bg-amber-500 transition-all duration-200 rounded-full';
+        chewStatusText.textContent = `กำลังเคี้ยวคำที่ ${chewCount}... เคี้ยวช้าๆ ให้ละเอียด`;
+      } else if (chewCount < 30) {
+        chewCircle.classList.add('chew-active', 'border-emerald-500', 'bg-black');
+        chewCircle.classList.remove('border-amber-400', 'border-zinc-800');
+        chewProgressBar.className = 'h-full bg-emerald-500 transition-all duration-200 rounded-full';
+        chewStatusText.innerHTML = `<span class="text-emerald-400 font-semibold">ละเอียดดีแล้ว (${chewCount}/30 ครั้ง) เคี้ยวต่ออีกนิด...</span>`;
+      } else {
+        chewCircle.classList.remove('chew-active');
+        chewCircle.classList.add('border-emerald-500', 'bg-black');
+        chewStatusText.innerHTML = '<strong class="text-emerald-400">ครบ 30 ครั้งแล้ว! พร้อมกลืนได้เลย</strong>';
+      }
+    }
+
+    chewStartBiteBtn.addEventListener('click', startNewBite);
+    chewStopBiteBtn.addEventListener('click', stopChewPacer);
+
+    // ==========================================
+    // 8. การตั้งค่าปุ่มเสียงและปิดแจ้งเตือน
+    // ==========================================
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      if (soundEnabled) {
+        initAudio();
+        soundIconOn.classList.remove('hidden');
+        soundIconOff.classList.add('hidden');
+        soundLabel.textContent = 'เสียงแจ้งเตือน: เปิด';
+      } else {
+        soundIconOn.classList.add('hidden');
+        soundIconOff.classList.remove('hidden');
+        soundLabel.textContent = 'เสียงแจ้งเตือน: ปิด';
+      }
+    });
+
+    closeToastBtn.addEventListener('click', () => {
+      toastBanner.classList.add('hidden');
+    });
+
+    // เริ่มต้นสร้างหน้าปัดมาตรวัดเมื่อโหลดหน้าเว็บ
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGaugeDial();
+      updateUI(0);
+    });
+  </script>
+</body>
+</html>
