@@ -314,7 +314,7 @@
       {
         start: 0, end: 10, color: 'red',
         badge: 'สีแดง • ห้าม (เร็วเกินไป)',
-        rangeText: '0 - 10 นาที',
+        rangeText: '0 - 12 นาที',
         title: 'ห้ามกินเสร็จเร็วเกินไป! สมองยังไม่รับรู้ความอิ่ม',
         desc: 'ร่างกายต้องใช้เวลาประมาณ 15-20 นาทีในการส่งสัญญาณฮอร์โมนความอิ่ม (Leptin) จากกระเพาะไปยังสมอง การกินเสร็จภายใน 10 นาทีทำให้เคี้ยวไม่ละเอียด ท้องอืด และกินเกินขนาด',
         tip: 'วางช้อนลงระหว่างคำ เคี้ยวอาหารให้นานขึ้นและจิบน้ำเปล่าเล็กน้อยเพื่อชะลอจังหวะ'
@@ -722,17 +722,17 @@
 
         // 24-Hour Hand
         const hourDeg = startBaseDeg + (decimalHour / 24) * 360;
-        const hTip = polarToCartesian(cx, cy, numR - 18, hourDeg);
+        const hTip = polarToCartesian(cx, cy, numR + 15, hourDeg);
         const hTail = polarToCartesian(cx, cy, 20, hourDeg + 180);
 
         // Minute Hand (standard 60-min sweep from top 270°)
         const minDeg = 270 + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
-        const mTip = polarToCartesian(cx, cy, tickOuterR - 6, minDeg);
+        const mTip = polarToCartesian(cx, cy, tickOuterR - 2, minDeg);
         const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
 
         // Second Hand
         const secDeg = 270 + (timeObj.seconds / 60) * 360;
-        const sTip = polarToCartesian(cx, cy, tickOuterR - 2, secDeg);
+        const sTip = polarToCartesian(cx, cy, tickOuterR  + 1, secDeg);
         const sTail = polarToCartesian(cx, cy, 28, secDeg + 180);
 
         html += `
@@ -740,7 +740,7 @@
             <!-- Minute Hand -->
             <line x1="${mTail.x.toFixed(1)}" y1="${mTail.y.toFixed(1)}" x2="${mTip.x.toFixed(1)}" y2="${mTip.y.toFixed(1)}" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
             <!-- 24-Hour Hand (Primary Meal Indicator) -->
-            <line x1="${hTail.x.toFixed(1)}" y1="${hTail.y.toFixed(1)}" x2="${hTip.x.toFixed(1)}" y2="${hTip.y.toFixed(1)}" stroke="${zoneHex}" stroke-width="5.5" stroke-linecap="round" />
+            <line x1="${hTail.x.toFixed(1)}" y1="${hTail.y.toFixed(1)}" x2="${hTip.x.toFixed(1)}" y2="${hTip.y.toFixed(1)}" stroke="${zoneHex}" stroke-width="4.5" stroke-linecap="round" />
             <!-- Second Hand -->
             <line x1="${sTail.x.toFixed(1)}" y1="${sTail.y.toFixed(1)}" x2="${sTip.x.toFixed(1)}" y2="${sTip.y.toFixed(1)}" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" />
             <!-- Center Cap -->
