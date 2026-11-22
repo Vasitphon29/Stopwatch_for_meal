@@ -66,7 +66,7 @@
       50% { transform: scale(1.07); }
     }
     .chew-active {
-      animation: chewPulse 0.75s ease-in-out infinite;
+      animation: chewPulse 1.0s ease-in-out infinite;
     }
   </style>
 </head>
@@ -363,7 +363,7 @@
     let chewInterval = null;
     let chewCount = 0;
     const CHEW_TARGET = 30;
-    const CHEW_INTERVAL_MS = 750; // จังหวะเคี้ยวประมาณ 1 ครั้งต่อ 0.75 วินาที (กำลังพอดี ไม่ช้าหรือเร็วเกินไป)
+    const CHEW_INTERVAL_MS = 1000; // จังหวะเคี้ยวประมาณ 1 ครั้งต่อ 0.75 วินาที (กำลังพอดี ไม่ช้าหรือเร็วเกินไป)
 
     // ==========================================
     // 2. อ้างอิง DOM Elements
