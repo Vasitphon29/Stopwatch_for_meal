@@ -1,586 +1,1134 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sport Tachometer 0-9000 RPM</title>
-    <!-- โหลด Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- โหลดฟอนต์สไตล์สปอร์ตและตัวเลขดิจิทัล -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Exo 2', sans-serif;
-            background-color: #090a0f;
-            background-image: radial-gradient(circle at 50% 30%, #1a1d29 0%, #090a0f 75%);
-            color: #ffffff;
-            user-select: none;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบจับเวลาการกินข้าวและการย่อยอาหาร | Meal & Digestion Horology</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Exo 2 (Dial Numbers), Prompt/Noto Sans Thai (Thai UI), Share Tech Mono & Orbitron (Digital Fallback) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Orbitron:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Digital-7 Mono Webfont CDN with Local/Fallback support -->
+  <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
 
-        .font-digital {
-            font-family: 'Exo 2', sans-serif;
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans Thai"', 'sans-serif'],
+            exo: ['"Exo 2"', 'sans-serif'],
+            digital: ['"Digital-7 Mono"', '"Share Tech Mono"', '"Orbitron"', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#151e32',
+              925: '#0b101d',
+              950: '#070a13',
+            }
+          }
         }
+      }
+    }
+  </script>
 
-        /* ตกแต่งขอบหน้าปัดโลหะและเงาสะท้อน */
-        .gauge-bezel {
-            background: conic-gradient(
-                from 135deg,
-                #2a2d3d 0%,
-                #525870 15%,
-                #181a24 35%,
-                #3c4154 50%,
-                #14161f 75%,
-                #474d63 90%,
-                #2a2d3d 100%
-            );
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.9),
-                0 0 30px rgba(0, 210, 255, 0.1),
-                inset 0 2px 4px rgba(255, 255, 255, 0.3);
-        }
+  <style>
+    /* Custom Scrollbar & Glassmorphism Polish */
+    body {
+      background: radial-gradient(circle at 15% 15%, #17233b 0%, #090d16 55%, #05070c 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+    }
 
-        .gauge-face {
-            background: radial-gradient(circle at 50% 45%, #161922 0%, #0a0b10 80%, #050608 100%);
-            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.95);
-        }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.65);
+    }
 
-        /* เอฟเฟกต์แสงเรืองรองของเข็ม */
-        .needle-glow {
-            filter: drop-shadow(0 0 8px rgba(255, 42, 42, 0.85));
-        }
+    .digital-screen {
+      background: linear-gradient(180deg, #060a10 0%, #0c1320 100%);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      box-shadow: inset 0 4px 18px rgba(0, 0, 0, 0.85), 0 0 20px rgba(14, 165, 233, 0.08);
+    }
 
-        /* ปรับแต่ง Range Slider สไตล์สปอร์ต */
-        input[type="range"].sport-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            background: transparent;
-            cursor: pointer;
-        }
+    .digital-digits {
+      font-family: 'Digital-7 Mono', 'Share Tech Mono', monospace;
+      letter-spacing: 0.06em;
+      font-variant-numeric: tabular-nums;
+    }
 
-        input[type="range"].sport-slider::-webkit-slider-runnable-track {
-            height: 12px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #00d2ff 0%, #00d2ff 66.6%, #ff2a2a 77.7%, #ff0000 100%);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
+    .exo-dial-text {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 500;
+      user-select: none;
+    }
 
-        input[type="range"].sport-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 28px;
-            width: 28px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #ffffff, #cbd5e1);
-            border: 3px solid #0f172a;
-            margin-top: -9px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 4px 6px rgba(0,0,0,0.6);
-            transition: transform 0.1s ease;
-        }
-
-        input[type="range"].sport-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.12);
-        }
-
-        input[type="range"].sport-slider::-webkit-slider-thumb:active {
-            transform: scale(0.95);
-            background: #ff3b3b;
-        }
-
-        /* แอนิเมชันไฟเตือน Redline */
-        @keyframes pulseRedline {
-            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 20px #ff1e1e; }
-            50% { opacity: 0.3; transform: scale(0.95); box-shadow: 0 0 5px #ff1e1e; }
-        }
-        .redline-flash {
-            animation: pulseRedline 0.18s infinite;
-        }
-    </style>
+    /* Custom Range Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(51, 65, 85, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 2px solid #f8fafc;
+      margin-top: -7px;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+<body class="antialiased selection:bg-sky-500/30 selection:text-sky-200">
 
-    <!-- ส่วนหัวข้อ -->
-    <div class="text-center mb-4 sm:mb-6">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs tracking-widest text-cyan-400 uppercase mb-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            Telemetry System Active
+  <!-- Main App Container -->
+  <div class="max-w-6xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-6">
+    
+    <!-- Header & Mode Switcher -->
+    <header class="glass-panel rounded-3xl p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3"></path>
+          </svg>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-wider uppercase text-white">
-            Sport <span class="text-red-500">Tachometer</span>
-        </h1>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">
-            ช่วงวัด 0 - 9,000 RPM | มุมกวาด 270° (เริ่มต้น 6 นาฬิกา หมุนตามเข็มนาฬิกา)
-        </p>
-    </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">นาฬิกาโภชนาการและการย่อยอาหาร</h1>
+          <p class="text-xs sm:text-sm text-slate-400">ควบคุมจังหวะการเคี้ยว ระยะพักท้อง และเวลาที่เหมาะสมของแต่ละมื้อ</p>
+        </div>
+      </div>
 
-    <!-- ตัวเรือนมาตรวัด (Gauge Container) -->
-    <div class="relative w-full max-w-[400px] sm:max-w-[440px] aspect-square rounded-full p-3.5 sm:p-4 gauge-bezel flex items-center justify-center">
+      <!-- 3 Mode Navigation Tabs -->
+      <nav class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800/80" role="tablist">
+        <button id="tab-eating" onclick="switchMode('eating')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-500 text-slate-950 shadow-md shadow-sky-500/25">
+          <span>🍽️</span>
+          <span>1. จับเวลากินข้าว</span>
+        </button>
+        <button id="tab-postmeal" onclick="switchMode('postmeal')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <span>⏳</span>
+          <span>2. หลังกินข้าว</span>
+        </button>
+        <button id="tab-clock24" onclick="switchMode('clock24')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <span>🕒</span>
+          <span>3. นาฬิกามื้ออาหาร 24 ชม.</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Workspace: Strictly Separated Analog Dial Section & Digital Control Section -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      
+      <!-- LEFT / TOP PANEL: Custom Analog Dial (Strictly Non-Overlapping) -->
+      <section class="lg:col-span-6 glass-panel rounded-3xl p-5 sm:p-7 flex flex-col items-center justify-between">
+        <div class="w-full flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+          <div>
+            <span id="dial-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-500/15 text-sky-300 border border-sky-500/30">
+              หน้าปัด 0 - 90 นาที (270°)
+            </span>
+            <h2 id="dial-title" class="text-lg font-bold text-white mt-1">หน้าปัดเข็มจับเวลากินข้าว</h2>
+          </div>
+          <div class="text-right text-xs text-slate-300">
+            <div id="dial-geometry-hint">เริ่ม 6 นาฬิกา → สุด 3 นาฬิกา</div>
+            <div class="font-exo text-slate-500">Font: Exo 2</div>
+          </div>
+        </div>
+
+        <!-- SVG Analog Dial Container -->
+        <div class="w-full max-w-[500px] aspect-square flex items-center justify-center my-auto py-2">
+          <svg id="analog-dial-svg" viewBox="0 0 400 400" class="w-full h-full drop-shadow-[0_12px_25px_rgba(0,0,0,0.65)]">
+            <!-- Dynamically rendered via JS -->
+          </svg>
+        </div>
+
+        <!-- Color Legend Strip under the Dial -->
+        <div id="dial-legend" class="w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <!-- Populated dynamically per mode -->
+        </div>
+      </section>
+
+      <!-- RIGHT / BOTTOM PANEL: Digital Clock Display, Controls & Health Guidance -->
+      <section class="lg:col-span-6 flex flex-col gap-6">
         
-        <!-- ไฟ Shift Light เตือนเปลี่ยนเกียร์เมื่อเข้า Redline -->
-        <div id="shiftLight" class="absolute -top-3 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 shadow-lg transition-all duration-150">
-            <span id="shiftDot1" class="w-2.5 h-2.5 rounded-full bg-slate-700 transition-colors"></span>
-            <span id="shiftDot2" class="w-2.5 h-2.5 rounded-full bg-slate-700 transition-colors"></span>
-            <span id="shiftText" class="text-[10px] font-bold tracking-widest text-slate-500 uppercase px-1">SHIFT</span>
-            <span id="shiftDot3" class="w-2.5 h-2.5 rounded-full bg-slate-700 transition-colors"></span>
-            <span id="shiftDot4" class="w-2.5 h-2.5 rounded-full bg-slate-700 transition-colors"></span>
+        <!-- Separated Digital Clock Module -->
+        <div class="glass-panel rounded-3xl p-5 sm:p-7 flex flex-col gap-5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+              หน้าจอแสดงผลดิจิตอล (แยกส่วนอิสระ)
+            </span>
+            <span id="digital-unit-label" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">
+              รูปแบบ: นาที : วินาที (MM:SS)
+            </span>
+          </div>
+
+          <!-- Digital 7-Segment Display Box -->
+          <div class="digital-screen rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden">
+            <div id="digital-sub-header" class="text-xs text-sky-400/80 font-medium mb-1 tracking-wide">
+              เวลาที่ผ่านไป (ELAPSED TIME)
+            </div>
+            <div id="digital-readout" class="digital-digits text-5xl sm:text-6xl md:text-7xl font-light text-sky-300 drop-shadow-[0_0_12px_rgba(56,189,248,0.45)] select-none">
+              00:00
+            </div>
+            <div id="digital-extra-info" class="text-xs sm:text-sm text-slate-400 mt-2 font-medium">
+              0.0 นาที / สูงสุด 90 นาที
+            </div>
+          </div>
+
+          <!-- Controls for Timer Modes (Eating & Post-Meal) -->
+          <div id="timer-controls" class="flex flex-col gap-4">
+            <div class="grid grid-cols-3 gap-3">
+              <button id="btn-start" onclick="startTimer()" class="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                <span>เริ่มจับเวลา</span>
+              </button>
+              <button id="btn-pause" onclick="pauseTimer()" class="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
+                <span>หยุดชั่วคราว</span>
+              </button>
+              <button id="btn-reset" onclick="resetTimer()" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border border-slate-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>รีเซ็ต</span>
+              </button>
+            </div>
+
+            <!-- Interactive Time Simulator Slider -->
+            <div class="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
+              <div class="flex justify-between items-center text-xs mb-2">
+                <span class="text-slate-300 font-medium">🎛️ ลากแถบเพื่อจำลองเวลาและดูคำแนะนำแต่ละช่วงสี:</span>
+                <span id="slider-val-label" class="font-exo font-bold text-sky-400">0 นาที</span>
+              </div>
+              <input id="time-slider" type="range" min="0" max="5400" step="10" value="0" oninput="onSliderInput(this.value)" class="w-full" />
+            </div>
+          </div>
+
+          <!-- Controls for 24-Hour Normal Clock Mode -->
+          <div id="clock24-controls" class="hidden flex-col gap-3">
+            <div class="flex items-center justify-between bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
+              <div>
+                <div class="text-sm font-semibold text-white">โหมดจำลองเวลา 24 ชั่วโมง</div>
+                <div class="text-xs text-slate-400">เปิดเพื่อเลื่อนดูคำแนะนำมื้ออาหารในช่วงเวลาต่างๆ ของวัน</div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="sim24-toggle" onchange="toggleSim24(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+              </label>
+            </div>
+
+            <div id="sim24-slider-box" class="hidden bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
+              <div class="flex justify-between items-center text-xs mb-2">
+                <span class="text-slate-300 font-medium">🕒 เลือกเวลาจำลอง (00:00 - 23:59):</span>
+                <span id="sim24-val-label" class="font-exo font-bold text-sky-400">12:00 น.</span>
+              </div>
+              <input id="sim24-slider" type="range" min="0" max="1439" step="5" value="720" oninput="onSim24Input(this.value)" class="w-full" />
+            </div>
+          </div>
         </div>
 
-        <!-- พื้นหน้าปัดด้านใน -->
-        <div class="relative w-full h-full rounded-full gauge-face overflow-hidden flex items-center justify-center border border-slate-800">
-            
-            <!-- SVG สำหรับวาดสเกล ตัวเลข แถบสี และเข็ม -->
-            <svg id="tachometerSvg" viewBox="0 0 400 400" class="w-full h-full">
-                <defs>
-                    <!-- ไล่ระดับสีแถบวิ่งตามเข็ม (Dynamic Arc) -->
-                    <linearGradient id="activeArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#00d2ff" />
-                        <stop offset="55%" stop-color="#3b82f6" />
-                        <stop offset="75%" stop-color="#ff5500" />
-                        <stop offset="100%" stop-color="#ff1a1a" />
-                    </linearGradient>
+        <!-- Current Zone Status & Detailed Medical/Nutrition Explanation Card -->
+        <div id="status-card" class="glass-panel rounded-3xl p-5 sm:p-6 border-l-8 border-l-red-500 transition-all duration-300 flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2.5">
+                <span id="status-dot" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_12px_#ef4444]"></span>
+                <span id="status-badge" class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
+                  สีแดง • ห้าม / เร็วเกินไป
+                </span>
+              </div>
+              <span id="status-range" class="text-xs font-exo font-semibold text-slate-400">
+                ช่วง 0 - 10 นาที
+              </span>
+            </div>
 
-                    <!-- เงาเรืองแสงสำหรับสเกล Redline (ใช้ userSpaceOnUse เพื่อไม่ให้เส้นแนวนอนที่ 360° หายไป) -->
-                    <filter id="redGlow" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
-                        <feGaussianBlur stdDeviation="3" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                    </filter>
+            <h3 id="status-title" class="text-lg sm:text-xl font-bold text-white mb-2">
+              เคี้ยวเร็วเกินไป สมองยังไม่รับรู้ความอิ่ม
+            </h3>
+            <p id="status-desc" class="text-sm text-slate-300 leading-relaxed">
+              ในช่วง 10 นาทีแรก ฮอร์โมนความอิ่ม (Leptin) ยังไม่ถูกส่งไปยังสมอง การกินเสร็จภายในเวลานี้มักทำให้อาหารไม่ละเอียด กระเพาะทำงานหนัก และเสี่ยงกินเกินความจำเป็น
+            </p>
+          </div>
 
-                    <!-- ไล่ระดับสีฝาครอบแกนเข็มตรงกลาง -->
-                    <radialGradient id="capGrad" cx="40%" cy="35%" r="65%">
-                        <stop offset="0%" stop-color="#475569" />
-                        <stop offset="50%" stop-color="#1e293b" />
-                        <stop offset="100%" stop-color="#090d16" />
-                    </radialGradient>
-                </defs>
-
-                <!-- วงแหวนตกแต่งพื้นหลังด้านใน -->
-                <circle cx="200" cy="200" r="184" fill="none" stroke="#1e293b" stroke-width="1" stroke-dasharray="4 4" />
-                <circle cx="200" cy="200" r="118" fill="none" stroke="#1e293b" stroke-width="1.5" opacity="0.6" />
-
-                <!-- แถบโค้งพื้นหลังสเกล (270 องศา) -->
-                <path id="trackArc" fill="none" stroke="#1e293b" stroke-width="12" stroke-linecap="butt" />
-
-                <!-- แถบโค้งโซน Redline พื้นหลัง (7000 - 9000 RPM) -->
-                <path id="redlineZoneArc" fill="none" stroke="rgba(239, 68, 68, 0.25)" stroke-width="16" stroke-linecap="butt" />
-
-                <!-- แถบโค้งเรืองแสงที่วิ่งตามค่า RPM ปัจจุบัน -->
-                <path id="progressArc" fill="none" stroke="url(#activeArcGrad)" stroke-width="8" stroke-linecap="butt" opacity="0.85" />
-
-                <!-- กลุ่มสำหรับสร้างขีดสเกลและตัวเลขด้วย JavaScript -->
-                <g id="ticksGroup"></g>
-                <g id="numbersGroup"></g>
-
-                <!-- ข้อความกำกับหน่วยบนหน้าปัด (อยู่มุมขวาล่างซึ่งเป็นพื้นที่ว่าง 90 องศา) -->
-                <g transform="translate(275, 275)">
-                    <text x="0" y="0" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700" letter-spacing="1.5">x1000</text>
-                    <text x="0" y="15" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="700" letter-spacing="2">RPM</text>
-                </g>
-
-                <!-- จอแสดงผลดิจิทัลด้านล่างเยื้องขวา (ตำแหน่ง 4-5 นาฬิกา เพื่อไม่บังเลข 0 ที่ 6 นาฬิกา) -->
-                <g transform="translate(200, 200)">
-                    <!-- กรอบจอ LCD/OLED -->
-                    <rect x="24" y="34" width="96" height="44" rx="8" fill="#07090e" stroke="#334155" stroke-width="1.5" />
-                    <text x="72" y="47" text-anchor="middle" fill="#64748b" font-size="8" font-weight="600" letter-spacing="1.5">DIGITAL RPM</text>
-                    <text id="digitalRpmText" x="72" y="69" text-anchor="middle" fill="#00d2ff" font-family="Exo 2, sans-serif" font-size="20" font-weight="700" letter-spacing="1">0</text>
-                </g>
-
-                <!-- กลุ่มเข็มมาตรวัด (หมุนรอบจุดศูนย์กลาง 200, 200) -->
-                <!-- หมายเหตุ: วาดเข็มเริ่มต้นชี้ลงล่าง (6 นาฬิกา / 0 RPM) เมื่อ rotate(0) จะชี้ลงล่างพอดี -->
-                <g id="needleGroup" transform="translate(200, 200) rotate(0)" class="needle-glow">
-                    <!-- หางเข็ม (Counterweight) ชี้ขึ้นด้านบนเล็กน้อย -->
-                    <polygon points="-5,0 5,0 3,-36 -3,-36" fill="#334155" />
-                    <!-- ตัวเข็มหลักชี้ลงล่าง (ทิศ 6 นาฬิกา) ยาว 152px -->
-                    <polygon points="-4.5,0 4.5,0 1.2,152 -1.2,152" fill="#ff2a2a" />
-                    <!-- เส้นแกนสว่างกลางเข็ม -->
-                    <line x1="0" y1="10" x2="0" y2="148" stroke="#ffffff" stroke-width="1.2" opacity="0.85" />
-                </g>
-
-                <!-- ฝาครอบแกนกลางเข็ม (Center Cap) -->
-                <circle cx="200" cy="200" r="24" fill="url(#capGrad)" stroke="#475569" stroke-width="2" />
-                <circle cx="200" cy="200" r="14" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
-                <circle cx="200" cy="200" r="4" fill="#ef4444" />
-            </svg>
-
-            <!-- เงาสะท้อนกระจกหน้าปัด (Glass Glare) -->
-            <div class="absolute inset-0 rounded-full pointer-events-none bg-gradient-to-tr from-transparent via-white/[0.03] to-white/[0.08]"></div>
+          <!-- Actionable Tip Box -->
+          <div class="mt-4 pt-3.5 border-t border-slate-800/80 flex items-start gap-2.5 text-xs sm:text-sm text-slate-300">
+            <span class="text-base shrink-0">💡</span>
+            <span id="status-tip"><strong class="text-white">คำแนะนำ:</strong> วางช้อนส้อมลงระหว่างเคี้ยวแต่ละคำ และตั้งเป้าเคี้ยวให้ได้อย่างน้อย 20-30 ครั้งต่อคำ</span>
+          </div>
         </div>
-    </div>
 
-    <!-- แผงควบคุมด้านล่าง (Controls Panel) -->
-    <div class="w-full max-w-[440px] mt-6 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-2xl">
+      </section>
+    </main>
+
+    <!-- Comprehensive Reference Guide Section -->
+    <section class="glass-panel rounded-3xl p-5 sm:p-7">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <h3 id="guide-heading" class="text-base sm:text-lg font-bold text-white">
+          📋 ตารางสรุปเกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลากินข้าว 0 - 90 นาที)
+        </h3>
+        <span class="text-xs text-slate-400">คลิกที่รายการเพื่อจำลองเข็มไปยังช่วงเวลานั้น</span>
+      </div>
+      <div id="guide-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <!-- Populated dynamically per mode -->
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * DATA DEFINITIONS FOR ALL 3 MODES
+     * ============================================================================
+     */
+    const COLORS = {
+      red:    { hex: '#EF4444', bg: 'bg-red-500/15',    border: 'border-red-500/40',    borderLeft: 'border-l-red-500',    text: 'text-red-300',    dot: 'bg-red-500',    shadow: 'shadow-[0_0_12px_#ef4444]', label: 'สีแดง • ห้าม' },
+      yellow: { hex: '#F59E0B', bg: 'bg-amber-500/15',  border: 'border-amber-500/40',  borderLeft: 'border-l-amber-500',  text: 'text-amber-300',  dot: 'bg-amber-500',  shadow: 'shadow-[0_0_12px_#f59e0b]', label: 'สีเหลือง • ไม่แนะนำ' },
+      green:  { hex: '#10B981', bg: 'bg-emerald-500/15',border: 'border-emerald-500/40',borderLeft: 'border-l-emerald-500',text: 'text-emerald-300',dot: 'bg-emerald-500',shadow: 'shadow-[0_0_12px_#10b981]', label: 'สีเขียว • แนะนำ' },
+      blue:   { hex: '#0EA5E9', bg: 'bg-sky-500/15',    border: 'border-sky-500/40',    borderLeft: 'border-l-sky-500',    text: 'text-sky-300',    dot: 'bg-sky-500',    shadow: 'shadow-[0_0_12px_#0ea5e9]', label: 'สีฟ้า • ดีที่สุด' },
+    };
+
+    // MODE 1: Eating Timer (0 to 90 minutes, 270 degrees from 6 o'clock clockwise to 3 o'clock)
+    const EATING_ZONES = [
+      {
+        start: 0, end: 10, color: 'red',
+        badge: 'สีแดง • ห้าม (เร็วเกินไป)',
+        rangeText: '0 - 10 นาที',
+        title: 'ห้ามกินเสร็จเร็วเกินไป! สมองยังไม่รับรู้ความอิ่ม',
+        desc: 'ร่างกายต้องใช้เวลาประมาณ 15-20 นาทีในการส่งสัญญาณฮอร์โมนความอิ่ม (Leptin) จากกระเพาะไปยังสมอง การกินเสร็จภายใน 10 นาทีทำให้เคี้ยวไม่ละเอียด ท้องอืด และกินเกินขนาด',
+        tip: 'วางช้อนลงระหว่างคำ เคี้ยวอาหารให้นานขึ้นและจิบน้ำเปล่าเล็กน้อยเพื่อชะลอจังหวะ'
+      },
+      {
+        start: 10, end: 15, color: 'yellow',
+        badge: 'สีเหลือง • ไม่แนะนำ',
+        rangeText: '10 - 15 นาที',
+        title: 'ยังค่อนข้างเร็ว ควรยืดเวลาการเคี้ยวอีกนิด',
+        desc: 'กระเพาะอาหารเริ่มรับรู้ปริมาณอาหารบางส่วนแล้ว แต่เอนไซม์ในน้ำลาย (Amylase) ยังคลุกเคล้ากับอาหารได้ไม่เต็มที่ หากหยุดกินตอนนี้มักรู้สึกอยากของหวานต่อ',
+        tip: 'พยายามเคี้ยวให้ละเอียดจนอาหารอ่อนนุ่มก่อนกลืน และพูดคุยหรือพักหายใจระหว่างมื้อ'
+      },
+      {
+        start: 15, end: 20, color: 'green',
+        badge: 'สีเขียว • แนะนำ',
+        rangeText: '15 - 20 นาที',
+        title: 'จังหวะเหมาะสม ระบบย่อยเริ่มทำงานได้ดี',
+        desc: 'เป็นเกณฑ์ขั้นต่ำที่แพทย์และนักโภชนาการแนะนำ ฮอร์โมนความอิ่มเริ่มทำงาน ช่วยลดภาระของกระเพาะอาหารและควบคุมระดับน้ำตาลหลังมื้ออาหารได้ดีขึ้น',
+        tip: 'สังเกตความรู้สึกอิ่มระดับ 80% (Hara Hachi Bu) หากเริ่มอิ่มพอดีสามารถหยุดมื้อได้'
+      },
+      {
+        start: 20, end: 30, color: 'blue',
+        badge: 'สีฟ้า • ดีที่สุด (Golden Zone)',
+        rangeText: '20 - 30 นาที',
+        title: 'ช่วงเวลาที่ดีที่สุด! สมดุลทั้งการเคี้ยวและฮอร์โมนอิ่ม',
+        desc: 'จุดสูงสุดของคุณภาพการกินอาหาร สมองรับรู้ความอิ่มอย่างสมบูรณ์ อาหารถูกย่อยเชิงกลอย่างละเอียด ลดความเสี่ยงกรดไหลย้อน ไขมันสะสม และช่วยให้ควบคุมน้ำหนักได้ดีเยี่ยม',
+        tip: 'ยอดเยี่ยมมาก! รักษามาตรฐานเวลานี้ในทุกมื้อหลักเพื่อสุขภาพลำไส้ที่แข็งแรง'
+      },
+      {
+        start: 30, end: 45, color: 'green',
+        badge: 'สีเขียว • แนะนำ (มื้อสังสรรค์/มื้อใหญ่)',
+        rangeText: '30 - 45 นาที',
+        title: 'เหมาะสมสำหรับมื้ออาหารที่มีหลายจานหรือทานร่วมกับครอบครัว',
+        desc: 'ยังอยู่ในเกณฑ์ที่ดีและผ่อนคลาย เหมาะกับมื้อที่มีทั้งอาหารคาว ซุป และผลไม้ แต่ควรระวังไม่เผลอตักอาหารเพิ่มเพราะความเพลิดเพลิน',
+        tip: 'ควรรวบช้อนเมื่อทานจานหลักเสร็จ เพื่อไม่ให้กินจุกจิกต่อเนื่องโดยไม่รู้ตัว'
+      },
+      {
+        start: 45, end: 60, color: 'yellow',
+        badge: 'สีเหลือง • ไม่แนะนำ (นานเกินไป)',
+        rangeText: '45 - 60 นาที',
+        title: 'ใช้เวลานานเกินไป อาหารเริ่มเย็นชืดและเสี่ยงกินเกิน',
+        desc: 'การนั่งกินต่อเนื่องนานเกิน 45 นาที ทำให้ระบบย่อยอาหารต้องหลั่งกรดต่อเนื่องเป็นเวลานาน และมักเกิดพฤติกรรมกินเรื่อยๆ จนได้รับพลังงานเกินความจำเป็น',
+        tip: 'ควรยุติมื้ออาหารและเริ่มนับเวลาพักท้องหลังมื้ออาหารได้แล้ว'
+      },
+      {
+        start: 60, end: 90, color: 'red',
+        badge: 'สีแดง • ห้าม (รบกวนระบบย่อย)',
+        rangeText: '60 - 90 นาที',
+        title: 'ห้ามกินยืดเยื้อเกิน 1 ชั่วโมง! รบกวนรอบการย่อยอาหาร',
+        desc: 'การกินอาหารนาน 60-90 นาที ทำให้อินซูลินถูกกระตุ้นค้างเป็นเวลานาน รบกวนกระบวนการทำความสะอาดลำไส้ (MMC) และทำให้รู้สึกอึดอัดแน่นท้อง',
+        tip: 'หยุดรับประทานอาหารทันที ดื่มน้ำเปล่าอุณหภูมิห้อง และเริ่มจับเวลาหลังกินข้าว'
+      }
+    ];
+
+    // MODE 2: Post-Meal Timer (0 to 10 hours, 270 degrees from 6 o'clock clockwise to 3 o'clock)
+    const POSTMEAL_ZONES = [
+      {
+        start: 0, end: 2, color: 'red',
+        badge: 'สีแดง • ห้าม (0 - 2 ชม.)',
+        rangeText: '0.0 - 2.0 ชั่วโมงหลังกิน',
+        title: 'ห้ามนอนราบ และห้ามออกกำลังกายหนักเด็ดขาด!',
+        desc: 'อาหารยังอัดแน่นอยู่ในกระเพาะอาหารส่วนต้น การเอนตัวนอนราบจะทำให้กรดและอาหารไหลย้อนขึ้นหลอดอาหาร ส่วนการออกกำลังกายหนักจะดึงเลือดออกจากระบบย่อยทำให้จุกเสียด',
+        tip: 'นั่งตัวตรง หรือเดินย่อยเบาๆ 10-15 นาที ห้ามนอนกลางวันหรือเอนหลังทันที'
+      },
+      {
+        start: 2, end: 3, color: 'yellow',
+        badge: 'สีเหลือง • ไม่แนะนำ (2 - 3 ชม.)',
+        rangeText: '2.0 - 3.0 ชั่วโมงหลังกิน',
+        title: 'อาหารกำลังเคลื่อนสู่ลำไส้เล็ก ยังไม่แนะนำให้นอนสนิท',
+        desc: 'กระเพาะย่อยอาหารไปได้ประมาณ 50-70% แล้ว หากเป็นมื้อเบาๆ อาจเริ่มออกกำลังกายเบาได้ แต่สำหรับมื้อหนักยังไม่ควรเข้านอนเพราะอาจหลับไม่สนิทและเกิดกรดไหลย้อนแฝง',
+        tip: 'หากง่วงนอนควรรออีกอย่างน้อย 1 ชั่วโมง หรือหนุนหมอนสูงหากจำเป็นต้องพักผ่อน'
+      },
+      {
+        start: 3, end: 4, color: 'green',
+        badge: 'สีเขียว • แนะนำ (3 - 4 ชม.)',
+        rangeText: '3.0 - 4.0 ชั่วโมงหลังกิน',
+        title: 'ปลอดภัยสำหรับเข้านอน และพร้อมออกกำลังกายเต็มรูปแบบ',
+        desc: 'กระเพาะอาหารระบายอาหารส่วนใหญ่ลงสู่ลำไส้เล็กแล้ว ระดับน้ำตาลและอินซูลินเริ่มกลับสู่ภาวะสมดุล สามารถเข้านอนได้อย่างสบายท้องหรือออกกำลังกายได้',
+        tip: 'เป็นระยะเวลาขั้นต่ำที่แนะนำให้เว้นก่อนเข้านอนหลังมื้อเย็น'
+      },
+      {
+        start: 4, end: 5, color: 'blue',
+        badge: 'สีฟ้า • ดีที่สุด (4 - 5 ชม.)',
+        rangeText: '4.0 - 5.0 ชั่วโมงหลังกิน',
+        title: 'จุดสมดุลที่ดีที่สุด! เหมาะทั้งเข้านอนและรับมื้อถัดไป',
+        desc: 'ระบบทำความสะอาดลำไส้เล็ก (Migrating Motor Complex - MMC) ทำงานสมบูรณ์ กระเพาะอาหารว่างพอดี ไม่มีอาหารตกค้าง เป็นเวลาที่ดีที่สุดในการเข้านอนหรือเริ่มทานมื้อหลักถัดไป',
+        tip: 'หากเป็นช่วงกลางวัน นี่คือจังหวะทองในการรับประทานอาหารมื้อถัดไปโดยไม่หิวโซ'
+      },
+      {
+        start: 5, end: 6, color: 'green',
+        badge: 'สีเขียว • แนะนำ (5 - 6 ชม.)',
+        rangeText: '5.0 - 6.0 ชั่วโมงหลังกิน',
+        title: 'ช่วงเว้นมื้ออาหารที่เหมาะสม ร่างกายเริ่มดึงพลังงานสำรอง',
+        desc: 'ระดับอินซูลินลดลงสู่ระดับพื้นฐาน ร่างกายเริ่มเผาผลาญไขมันสะสมได้ดีขึ้น และเริ่มหลั่งฮอร์โมนความหิว (Ghrelin) อย่างเป็นธรรมชาติเพื่อเตรียมพร้อมสำหรับมื้อถัดไป',
+        tip: 'เหมาะอย่างยิ่งสำหรับมื้ออาหารต่อไป เตรียมเลือกอาหารที่มีโปรตีนและใยอาหารสูง'
+      },
+      {
+        start: 6, end: 8, color: 'yellow',
+        badge: 'สีเหลือง • ไม่แนะนำ (6 - 8 ชม.)',
+        rangeText: '6.0 - 8.0 ชั่วโมงหลังกิน',
+        title: 'ปล่อยท้องว่างนาน เริ่มหิวจัดและเสี่ยงกินเร็วเกินไป',
+        desc: 'หากไม่ได้ตั้งใจทำ Intermittent Fasting (IF) การเว้นมื้อนาน 6-8 ชั่วโมงจะทำให้ระดับน้ำตาลในเลือดลดต่ำลง ส่งผลให้หิวจัด หน้ามืด และมีแนวโน้มกินเร็วหรือกินหวานจัดในมื้อถัดไป',
+        tip: 'ควรรีบรับประทานมื้ออาหาร โดยเริ่มจากโปรตีนและผักก่อนแป้งเพื่อกันน้ำตาลพุ่ง'
+      },
+      {
+        start: 8, end: 10, color: 'red',
+        badge: 'สีแดง • ห้าม (8 - 10 ชม.)',
+        rangeText: '8.0 - 10.0 ชั่วโมงหลังกิน',
+        title: 'ห้ามปล่อยท้องว่างนานเกินไป (ยกเว้นช่วงนอนหลับหรือทำ IF)',
+        desc: 'น้ำย่อยในกระเพาะอาหารที่ว่างเปล่าเป็นเวลานานอาจระคายเคืองเยื่อบุกระเพาะอาหาร เสี่ยงโรคกระเพาะ กรดเกิน และทำให้ระบบเผาผลาญชะลอตัวหากอดอาหารบ่อยครั้งในระหว่างวัน',
+        tip: 'ควรรับประทานอาหารย่อยง่ายทันที หลีกเลี่ยงอาหารรสจัด กาแฟดำ หรือของทอดตอนท้องว่างจัด'
+      }
+    ];
+
+    // MODE 3: 24-Hour Clock Meal Timing Guide (00:00 to 24:00, full 360 degrees)
+    // Green = แนะนำให้กิน, Yellow = อาจจะแนะนำ, Red = ไม่แนะนำให้กิน
+    const CLOCK24_ZONES = [
+      {
+        startHour: 0, endHour: 6.5, color: 'red',
+        badge: 'สีแดง • ไม่แนะนำให้กิน',
+        rangeText: '00:00 - 06:30 น. (ช่วงดึกถึงเช้ามืด)',
+        title: 'ไม่แนะนำให้กิน! ช่วงเวลาพักฟื้นของระบบย่อยและฮอร์โมน',
+        desc: 'ร่างกายกำลังหลั่งเมลาโทนินและโกรทฮอร์โมนเพื่อซ่อมแซมเซลล์ ระบบย่อยอาหารและอินซูลินทำงานต่ำสุด การกินช่วงนี้ทำให้น้ำตาลสะสมเป็นไขมันและรบกวนการนอน',
+        tip: 'ดื่มได้เฉพาะน้ำเปล่า และรอรับประทานมื้อเช้าหลังเวลา 07:00 น.'
+      },
+      {
+        startHour: 6.5, endHour: 7.0, color: 'yellow',
+        badge: 'สีเหลือง • อาจจะแนะนำ',
+        rangeText: '06:30 - 07:00 น. (ช่วงตื่นนอนตอนเช้า)',
+        title: 'อาจจะแนะนำ: เหมาะสำหรับเครื่องดื่มอุ่นๆ หรือมื้อเบาๆ ก่อนออกกำลังกาย',
+        desc: 'ร่างกายเพิ่งตื่นนอน คอร์ติซอลกำลังเพิ่มขึ้นเพื่อปลุกร่างกาย หากต้องเดินทางหรือออกกำลังกายเช้า สามารถรองท้องด้วยกล้วยหอม นม หรือไข่ต้มได้',
+        tip: 'ดื่มน้ำเปล่า 1-2 แก้วหลังตื่นนอนเพื่อกระตุ้นระบบขับถ่ายก่อนเริ่มมื้อเช้า'
+      },
+      {
+        startHour: 7.0, endHour: 9.0, color: 'green',
+        badge: 'สีเขียว • แนะนำให้กิน (มื้อเช้า)',
+        rangeText: '07:00 - 09:00 น. (เวลาทองของมื้อเช้า)',
+        title: 'แนะนำให้กิน! ช่วงเวลาที่ดีที่สุดสำหรับอาหารมื้อเช้า',
+        desc: 'ตามนาฬิกาชีวภาพ (Circadian Rhythm) กระเพาะอาหารและลำไส้เล็กทำงานตื่นตัวสูงสุด ร่างกายมีความไวต่ออินซูลินดีที่สุด สามารถเปลี่ยนสารอาหารเป็นพลังงานได้เต็มที่',
+        tip: 'เน้นโปรตีนคุณภาพดี คาร์โบไฮเดรตเชิงซ้อน และไขมันดี เพื่อความอิ่มนานตลอดเช้า'
+      },
+      {
+        startHour: 9.0, endHour: 10.5, color: 'yellow',
+        badge: 'สีเหลือง • อาจจะแนะนำ (มื้อสาย)',
+        rangeText: '09:00 - 10:30 น. (ช่วงสาย)',
+        title: 'อาจจะแนะนำ: สำหรับผู้ที่ตื่นสายหรือทำ IF 16/8',
+        desc: 'ยังสามารถทานมื้อเช้าแบบรวบยอด (Brunch) ได้ แต่ไม่ควรทานหนักจนเกินไป เพราะจะไปเบียดความหิวของมื้อกลางวันทำให้มื้อเที่ยงคลาดเคลื่อน',
+        tip: 'หากทานมื้อเช้าไปแล้ว ช่วงนี้ควรดื่มแค่น้ำเปล่าหรือชา/กาแฟไม่ใส่น้ำตาล'
+      },
+      {
+        startHour: 10.5, endHour: 12.0, color: 'red',
+        badge: 'สีแดง • ไม่แนะนำให้กิน',
+        rangeText: '10:30 - 12:00 น. (ก่อนมื้อกลางวัน)',
+        title: 'ไม่แนะนำให้กินจุกจิก! ใกล้เวลามื้อกลางวันเกินไป',
+        desc: 'การกินขนมหรือของว่างในช่วงนี้จะทำให้น้ำตาลในเลือดพุ่งสูงก่อนมื้อหลัก ส่งผลให้หมดความอยากอาหารที่มีประโยชน์ในมื้อเที่ยงและได้รับสารอาหารไม่ครบ',
+        tip: 'อดใจรออีกนิด ดื่มน้ำเปล่าเพื่อลดความอยากอาหารและเตรียมทานมื้อเที่ยงเวลา 12:00 น.'
+      },
+      {
+        startHour: 12.0, endHour: 13.5, color: 'green',
+        badge: 'สีเขียว • แนะนำให้กิน (มื้อกลางวัน)',
+        rangeText: '12:00 - 13:30 น. (เวลาทองของมื้อกลางวัน)',
+        title: 'แนะนำให้กิน! ช่วงเวลาเหมาะสมสำหรับมื้อกลางวัน',
+        desc: 'ระบบเผาผลาญของร่างกายทำงานในระดับสูงสุดของวัน ร่างกายต้องการพลังงานเพื่อใช้ในช่วงบ่าย การกินมื้อเที่ยงตรงเวลาช่วยรักษาระดับน้ำตาลให้คงที่',
+        tip: 'แบ่งสัดส่วนจานอาหาร 2:1:1 (ผัก 2 ส่วน : ข้าวไม่ขัดสี 1 ส่วน : เนื้อสัตว์ไม่ติดมัน 1 ส่วน)'
+      },
+      {
+        startHour: 13.5, endHour: 15.0, color: 'red',
+        badge: 'สีแดง • ไม่แนะนำให้กิน',
+        rangeText: '13:30 - 15:00 น. (ช่วงย่อยมื้อกลางวัน)',
+        title: 'ไม่แนะนำให้กินเพิ่ม! ปล่อยให้กระเพาะย่อยมื้อกลางวัน',
+        desc: 'เพิ่งผ่านมื้อกลางวันมาไม่นาน การกินของหวานหรือชานมไข่มุกทันทีหลังมื้อเที่ยงจะทำให้อินซูลินพุ่งสูงและเกิดอาการง่วงนอนช่วงบ่าย (Food Coma)',
+        tip: 'หากง่วงนอนให้ลุกเดินยืดเส้นยืดสายหรือดื่มน้ำเปล่าแทนการกินของหวาน'
+      },
+      {
+        startHour: 15.0, endHour: 16.5, color: 'yellow',
+        badge: 'สีเหลือง • อาจจะแนะนำ (ของว่างบ่าย)',
+        rangeText: '15:00 - 16:30 น. (ช่วงบ่าย)',
+        title: 'อาจจะแนะนำ: สามารถทานของว่างสุขภาพมื้อเล็กๆ ได้',
+        desc: 'เป็นช่วงที่มื้อเที่ยงย่อยไปเกือบหมดแล้ว หากรู้สึกหิวหรือต้องใช้สมองหนัก สามารถทานของว่างเบาๆ ที่ไม่หวานจัดเพื่อไม่ให้หิวโซในมื้อเย็น',
+        tip: 'แนะนำถั่วอบธรรมชาติ 1 กำมือ โยเกิร์ตรสธรรมชาติ หรือผลไม้หวานน้อย'
+      },
+      {
+        startHour: 16.5, endHour: 17.5, color: 'red',
+        badge: 'สีแดง • ไม่แนะนำให้กิน',
+        rangeText: '16:30 - 17:30 น. (ก่อนมื้อเย็น)',
+        title: 'ไม่แนะนำให้กินรองท้อง! ใกล้เวลามื้อเย็นแล้ว',
+        desc: 'การกินขนมช่วงเย็นก่อนกลับบ้านมักทำให้ได้รับแคลอรีซ้ำซ้อน เพราะเมื่อถึงบ้านก็ยังทานมื้อเย็นร่วมกับครอบครัวอีก',
+        tip: 'เตรียมตัวสำหรับมื้อเย็นในช่วง 17:30 - 19:30 น.'
+      },
+      {
+        startHour: 17.5, endHour: 19.5, color: 'green',
+        badge: 'สีเขียว • แนะนำให้กิน (มื้อเย็น)',
+        rangeText: '17:30 - 19:30 น. (เวลาทองของมื้อเย็น)',
+        title: 'แนะนำให้กิน! ช่วงเวลาที่ดีที่สุดสำหรับมื้อเย็น',
+        desc: 'ช่วยให้ร่างกายมีเวลาอย่างน้อย 3-4 ชั่วโมงในการย่อยอาหารให้เสร็จสมบูรณ์ก่อนเข้านอน ลดความเสี่ยงกรดไหลย้อนและช่วยให้หลับลึกขึ้น',
+        tip: 'ลดปริมาณแป้งและของทอดในมื้อเย็น เน้นโปรตีนย่อยง่าย เช่น ปลา เต้าหู้ และผักลวก/ต้ม'
+      },
+      {
+        startHour: 19.5, endHour: 20.5, color: 'yellow',
+        badge: 'สีเหลือง • อาจจะแนะนำ (มื้อค่ำ)',
+        rangeText: '19:30 - 20:30 น. (ช่วงหัวค่ำ)',
+        title: 'อาจจะแนะนำ: ควรเลือกเฉพาะอาหารย่อยง่ายและปริมาณน้อย',
+        desc: 'ประสิทธิภาพการเผาผลาญเริ่มลดลงตามนาฬิกาชีวภาพ หากจำเป็นต้องทานช่วงนี้ควรลดปริมาณลงครึ่งหนึ่งจากมื้อปกติและเลื่อนเวลาเข้านอนออกไปให้ครบ 3-4 ชม.',
+        tip: 'หลีกเลี่ยงเนื้อแดง อาหารมันจัด และเครื่องดื่มที่มีคาเฟอีนหรือน้ำตาลสูง'
+      },
+      {
+        startHour: 20.5, endHour: 24.0, color: 'red',
+        badge: 'สีแดง • ไม่แนะนำให้กิน',
+        rangeText: '20:30 - 24:00 น. (มื้อดึก)',
+        title: 'ไม่แนะนำให้กิน! เสี่ยงกรดไหลย้อนและไขมันสะสม',
+        desc: 'ร่างกายเข้าสู่โหมดเตรียมพักผ่อน เมลาโทนินเริ่มหลั่ง ซึ่งยับยั้งการหลั่งอินซูลิน ทำให้ร่างกายจัดการกับน้ำตาลได้แย่ลงและรบกวนคุณภาพการนอนหลับ',
+        tip: 'ปิดครัวหลัง 20:30 น. หากหิวจริงๆ ให้ดื่มน้ำอุ่นหรือนมอุ่นไขมันต่ำเพียงเล็กน้อย'
+      }
+    ];
+
+    /**
+     * ============================================================================
+     * APPLICATION STATE
+     * ============================================================================
+     */
+    let currentMode = 'eating'; // 'eating' | 'postmeal' | 'clock24'
+
+    // Timer state for Mode 1 (Eating - in seconds, max 90*60 = 5400s)
+    let eatingSeconds = 0;
+    let eatingRunning = false;
+
+    // Timer state for Mode 2 (Post-meal - in seconds, max 10*3600 = 36000s)
+    let postMealSeconds = 0;
+    let postMealRunning = false;
+
+    // Simulator state for Mode 3 (24-Hour Clock)
+    let sim24Enabled = false;
+    let sim24Minutes = 720; // 12:00
+
+    /**
+     * ============================================================================
+     * GEOMETRY & SVG RENDERING ENGINE
+     * ============================================================================
+     * Note on Coordinate Geometry:
+     * In SVG:
+     * - 0 degrees is 3 o'clock (right)
+     * - 90 degrees is 6 o'clock (bottom)
+     * - 180 degrees is 9 o'clock (left)
+     * - 270 degrees is 12 o'clock (top)
+     * 
+     * Requirement for Modes 1 & 2:
+     * - Start (0) at bottom (6 o'clock = 90° SVG)
+     * - Sweep 270 degrees clockwise to end (Max) at right (3 o'clock = 90° + 270° = 360° SVG)
+     */
+    function polarToCartesian(cx, cy, r, svgAngleDeg) {
+      const rad = (svgAngleDeg * Math.PI) / 180.0;
+      return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad)
+      };
+    }
+
+    function createArcPath(cx, cy, r, startSvgDeg, endSvgDeg) {
+      const start = polarToCartesian(cx, cy, r, startSvgDeg);
+      const end = polarToCartesian(cx, cy, r, endSvgDeg);
+      const sweepAngle = endSvgDeg - startSvgDeg;
+      const largeArcFlag = sweepAngle > 180 ? 1 : 0;
+      return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+    }
+
+    function renderDial() {
+      const svg = document.getElementById('analog-dial-svg');
+      const cx = 200, cy = 200;
+      const outerR = 150;
+      const trackR = 130;
+      const tickOuterR = 138;
+      const numR = 100;
+
+      let html = `
+        <defs>
+          <radialGradient id="dialBgGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#162035" />
+            <stop offset="82%" stop-color="#0b111e" />
+            <stop offset="100%" stop-color="#060911" />
+          </radialGradient>
+          <filter id="handGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.75"/>
+          </filter>
+        </defs>
+
+        <!-- Outer Bezel -->
+        <circle cx="${cx}" cy="${cy}" r="${outerR + 8}" fill="#0f172a" stroke="#334155" stroke-width="1" />
+        <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="url(#dialBgGrad)" stroke="#1e293b" stroke-width="3" />
+      `;
+
+      if (currentMode === 'eating' || currentMode === 'postmeal') {
+        const isEating = currentMode === 'eating';
+        const maxVal = isEating ? 90 : 10;
+        const zones = isEating ? EATING_ZONES : POSTMEAL_ZONES;
+        const startBaseDeg = 90; // 6 o'clock
+        const totalSweepDeg = 270; // Clockwise to 3 o'clock (360 deg)
+
+        // Background 270° track
+        html += `<path d="${createArcPath(cx, cy, trackR, startBaseDeg, startBaseDeg + totalSweepDeg)}" fill="none" stroke="#1e293b" stroke-width="22" stroke-linecap="butt" />`;
+
+        // Color Zone Arcs
+        zones.forEach(z => {
+          const a1 = startBaseDeg + (z.start / maxVal) * totalSweepDeg;
+          const a2 = startBaseDeg + (z.end / maxVal) * totalSweepDeg;
+          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.88" />`;
+        });
+
+        // Subtle inner ring border
+        html += `<circle cx="${cx}" cy="${cy}" r="${tickOuterR + 3}" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1" />`;
+
+        // Ticks & Exo 2 Numbers
+        const totalSubTicks = isEating ? 90 : 40; // Every 1 min for eating, every 0.25 hr (15m) for postmeal
+        for (let i = 0; i <= totalSubTicks; i++) {
+          const val = (i / totalSubTicks) * maxVal;
+          const deg = startBaseDeg + (i / totalSubTicks) * totalSweepDeg;
+          const isMajor = isEating ? (i % 10 === 0) : (i % 4 === 0);
+          const isMedium = isEating ? (i % 5 === 0 && !isMajor) : (i % 2 === 0 && !isMajor);
+
+          const len = isMajor ? 14 : (isMedium ? 9 : 5);
+          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
+          const p2 = polarToCartesian(cx, cy, tickOuterR - len, deg);
+
+          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : (isMedium ? '#94a3b8' : '#475569')}" stroke-width="${isMajor ? 2.5 : (isMedium ? 1.5 : 1)}" stroke-linecap="round" />`;
+
+          if (isMajor) {
+            const labelNum = Math.round(val);
+            const pText = polarToCartesian(cx, cy, numR, deg);
+            html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="24" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
+          }
+        }
+
+        // Start & End Anchor Labels in the open 90-degree quadrant (bottom-right area between 3 and 6 o'clock)
+        html += `
+          <text x="268" y="268" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-text">START 0 (6 น.)</text>
+          <text x="275" y="284" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-text">END ${maxVal} (3 น.)</text>
+        `;
+
+        // Unit Title inside dial (well away from digital screen)
+        html += `<text x="${cx}" y="${cy - 34}" fill="#94a3b8" font-size="12" text-anchor="middle" class="exo-dial-text tracking-widest">${isEating ? 'MINUTES (0-90)' : 'HOURS (0-10)'}</text>`;
+
+        // Compute Hand Angle
+        const currentVal = isEating ? (eatingSeconds / 60) : (postMealSeconds / 3600);
+        const clampedVal = Math.min(Math.max(currentVal, 0), maxVal);
+        const handDeg = startBaseDeg + (clampedVal / maxVal) * totalSweepDeg;
+        const activeZone = getActiveZone(clampedVal, zones);
+        const handColor = COLORS[activeZone.color].hex;
+
+        // Progress highlight arc
+        if (clampedVal > 0) {
+          html += `<path d="${createArcPath(cx, cy, trackR + 13, startBaseDeg, handDeg)}" fill="none" stroke="${handColor}" stroke-width="4" stroke-linecap="round" />`;
+        }
+
+        // Analog Hand
+        const tip = polarToCartesian(cx, cy, trackR - 8, handDeg);
+        const tail = polarToCartesian(cx, cy, 24, handDeg + 180);
+        html += `
+          <g filter="url(#handGlow)">
+            <line x1="${tail.x.toFixed(1)}" y1="${tail.y.toFixed(1)}" x2="${tip.x.toFixed(1)}" y2="${tip.y.toFixed(1)}" stroke="${handColor}" stroke-width="4.5" stroke-linecap="round" />
+            <circle cx="${cx}" cy="${cy}" r="10" fill="#0f172a" stroke="${handColor}" stroke-width="3.5" />
+            <circle cx="${cx}" cy="${cy}" r="3.5" fill="#ffffff" />
+          </g>
+        `;
+
+      } else {
+        // MODE 3: 24-Hour Normal Clock (00 at top 270° SVG, 06 at right 0°, 12 at bottom 90°, 18 at left 180°)
+        const startBaseDeg = 270; // 12 o'clock position represents 00:00 (Midnight)
         
-        <!-- แถบแสดงค่าสถานะและมุมองศาปัจจุบัน -->
-        <div class="flex items-center justify-between mb-3">
-            <div>
-                <span class="text-xs text-slate-400 block">รอบเครื่องยนต์ (Engine Speed)</span>
-                <div class="flex items-baseline gap-1.5">
-                    <span id="readoutRpm" class="font-digital text-2xl sm:text-3xl font-bold text-cyan-400">0</span>
-                    <span class="text-xs font-semibold text-slate-400">RPM</span>
+        // Color Zones around 360 degrees
+        CLOCK24_ZONES.forEach(z => {
+          const a1 = startBaseDeg + (z.startHour / 24) * 360;
+          const a2 = startBaseDeg + (z.endHour / 24) * 360;
+          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.88" />`;
+        });
+
+        html += `<circle cx="${cx}" cy="${cy}" r="${tickOuterR + 3}" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1" />`;
+
+        // 24 Hour Ticks & Exo 2 Numbers (0 to 23)
+        for (let h = 0; h < 24; h++) {
+          const deg = startBaseDeg + (h / 24) * 360;
+          const isMajor = h % 2 === 0;
+          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
+          const p2 = polarToCartesian(cx, cy, tickOuterR - (isMajor ? 13 : 8), deg);
+
+          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : '#94a3b8'}" stroke-width="${isMajor ? 2.2 : 1.3}" stroke-linecap="round" />`;
+
+          // Half-hour tick
+          const halfDeg = deg + 7.5;
+          const hp1 = polarToCartesian(cx, cy, tickOuterR, halfDeg);
+          const hp2 = polarToCartesian(cx, cy, tickOuterR - 4, halfDeg);
+          html += `<line x1="${hp1.x.toFixed(1)}" y1="${hp1.y.toFixed(1)}" x2="${hp2.x.toFixed(1)}" y2="${hp2.y.toFixed(1)}" stroke="#475569" stroke-width="1" />`;
+
+          const pText = polarToCartesian(cx, cy, numR, deg);
+          const fontSize = (h % 6 === 0) ? 16 : 13;
+          const fillCol = (h % 6 === 0) ? '#ffffff' : '#cbd5e1';
+          html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="${fillCol}" font-size="${fontSize}" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${h}</text>`;
+        }
+
+        html += `<text x="${cx}" y="${cy - 32}" fill="#94a3b8" font-size="11" text-anchor="middle" class="exo-dial-text tracking-widest">24-HOUR CLOCK</text>`;
+
+        // Get current or simulated time
+        const timeObj = getMode3Time();
+        const decimalHour = timeObj.hours + timeObj.minutes / 60 + timeObj.seconds / 3600;
+        const activeZone = getActiveClock24Zone(decimalHour);
+        const zoneHex = COLORS[activeZone.color].hex;
+
+        // 24-Hour Hand
+        const hourDeg = startBaseDeg + (decimalHour / 24) * 360;
+        const hTip = polarToCartesian(cx, cy, numR - 18, hourDeg);
+        const hTail = polarToCartesian(cx, cy, 20, hourDeg + 180);
+
+        // Minute Hand (standard 60-min sweep from top 270°)
+        const minDeg = 270 + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
+        const mTip = polarToCartesian(cx, cy, tickOuterR - 6, minDeg);
+        const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
+
+        // Second Hand
+        const secDeg = 270 + (timeObj.seconds / 60) * 360;
+        const sTip = polarToCartesian(cx, cy, tickOuterR - 2, secDeg);
+        const sTail = polarToCartesian(cx, cy, 28, secDeg + 180);
+
+        html += `
+          <g filter="url(#handGlow)">
+            <!-- Minute Hand -->
+            <line x1="${mTail.x.toFixed(1)}" y1="${mTail.y.toFixed(1)}" x2="${mTip.x.toFixed(1)}" y2="${mTip.y.toFixed(1)}" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+            <!-- 24-Hour Hand (Primary Meal Indicator) -->
+            <line x1="${hTail.x.toFixed(1)}" y1="${hTail.y.toFixed(1)}" x2="${hTip.x.toFixed(1)}" y2="${hTip.y.toFixed(1)}" stroke="${zoneHex}" stroke-width="5.5" stroke-linecap="round" />
+            <!-- Second Hand -->
+            <line x1="${sTail.x.toFixed(1)}" y1="${sTail.y.toFixed(1)}" x2="${sTip.x.toFixed(1)}" y2="${sTip.y.toFixed(1)}" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" />
+            <!-- Center Cap -->
+            <circle cx="${cx}" cy="${cy}" r="9" fill="#0f172a" stroke="${zoneHex}" stroke-width="3" />
+            <circle cx="${cx}" cy="${cy}" r="3" fill="#ffffff" />
+          </g>
+        `;
+      }
+
+      svg.innerHTML = html;
+    }
+
+    /**
+     * ============================================================================
+     * HELPER FUNCTIONS FOR ZONE MATCHING & UI UPDATES
+     * ============================================================================
+     */
+    function getActiveZone(val, zones) {
+      for (let i = 0; i < zones.length; i++) {
+        if (val >= zones[i].start && val < zones[i].end) {
+          return zones[i];
+        }
+      }
+      return zones[zones.length - 1];
+    }
+
+    function getActiveClock24Zone(decimalHour) {
+      const h = decimalHour % 24;
+      for (let i = 0; i < CLOCK24_ZONES.length; i++) {
+        if (h >= CLOCK24_ZONES[i].startHour && h < CLOCK24_ZONES[i].endHour) {
+          return CLOCK24_ZONES[i];
+        }
+      }
+      return CLOCK24_ZONES[0];
+    }
+
+    function getMode3Time() {
+      if (sim24Enabled) {
+        const h = Math.floor(sim24Minutes / 60);
+        const m = sim24Minutes % 60;
+        return { hours: h, minutes: m, seconds: 0 };
+      }
+      const now = new Date();
+      return {
+        hours: now.getHours(),
+        minutes: now.getMinutes(),
+        seconds: now.getSeconds()
+      };
+    }
+
+    function pad2(n) {
+      return String(Math.floor(n)).padStart(2, '0');
+    }
+
+    function updateDigitalAndStatus() {
+      const digitalReadout = document.getElementById('digital-readout');
+      const digitalExtra = document.getElementById('digital-extra-info');
+      const sliderValLabel = document.getElementById('slider-val-label');
+
+      let activeZone;
+
+      if (currentMode === 'eating') {
+        const mins = Math.floor(eatingSeconds / 60);
+        const secs = eatingSeconds % 60;
+        digitalReadout.textContent = `${pad2(mins)}:${pad2(secs)}`;
+        const decMin = (eatingSeconds / 60).toFixed(1);
+        digitalExtra.textContent = `${decMin} นาที / สูงสุด 90.0 นาที`;
+        sliderValLabel.textContent = `${mins} นาที ${secs} วินาที`;
+        document.getElementById('time-slider').value = eatingSeconds;
+
+        activeZone = getActiveZone(eatingSeconds / 60, EATING_ZONES);
+      } else if (currentMode === 'postmeal') {
+        const hrs = Math.floor(postMealSeconds / 3600);
+        const mins = Math.floor((postMealSeconds % 3600) / 60);
+        const secs = postMealSeconds % 60;
+        digitalReadout.textContent = `${pad2(hrs)}:${pad2(mins)}:${pad2(secs)}`;
+        const decHr = (postMealSeconds / 3600).toFixed(2);
+        digitalExtra.textContent = `${decHr} ชั่วโมง / สูงสุด 10.00 ชั่วโมง`;
+        sliderValLabel.textContent = `${hrs} ชม. ${mins} นาที`;
+        document.getElementById('time-slider').value = postMealSeconds;
+
+        activeZone = getActiveZone(postMealSeconds / 3600, POSTMEAL_ZONES);
+      } else {
+        const t = getMode3Time();
+        digitalReadout.textContent = `${pad2(t.hours)}:${pad2(t.minutes)}:${pad2(t.seconds)}`;
+        digitalExtra.textContent = sim24Enabled
+          ? `โหมดจำลองเวลา • ${pad2(t.hours)}:${pad2(t.minutes)} น.`
+          : `เวลาปัจจุบันเรียลไทม์ • วันนี้`;
+
+        const decHr = t.hours + t.minutes / 60 + t.seconds / 3600;
+        activeZone = getActiveClock24Zone(decHr);
+      }
+
+      // Update Digital Color Accent & Status Card
+      const c = COLORS[activeZone.color];
+      digitalReadout.style.color = c.hex;
+      digitalReadout.style.textShadow = `0 0 18px ${c.hex}66`;
+
+      const statusCard = document.getElementById('status-card');
+      statusCard.className = `glass-panel rounded-3xl p-5 sm:p-6 border-l-8 ${c.borderLeft} transition-all duration-300 flex-1 flex flex-col justify-between`;
+
+      const dot = document.getElementById('status-dot');
+      dot.className = `w-3.5 h-3.5 rounded-full ${c.dot} ${c.shadow}`;
+
+      const badge = document.getElementById('status-badge');
+      badge.className = `text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${c.bg} ${c.text} border ${c.border}`;
+      badge.textContent = activeZone.badge;
+
+      document.getElementById('status-range').textContent = activeZone.rangeText;
+      document.getElementById('status-title').textContent = activeZone.title;
+      document.getElementById('status-desc').textContent = activeZone.desc;
+      document.getElementById('status-tip').innerHTML = `<strong class="text-white">คำแนะนำ:</strong> ${activeZone.tip}`;
+    }
+
+    function renderLegendAndGuide() {
+      const legendEl = document.getElementById('dial-legend');
+      const guideGrid = document.getElementById('guide-grid');
+      const guideHeading = document.getElementById('guide-heading');
+
+      if (currentMode === 'eating' || currentMode === 'postmeal') {
+        legendEl.className = 'w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs';
+        legendEl.innerHTML = `
+          <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-lg text-red-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ห้าม</span>
+          </div>
+          <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-amber-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span><span>สีเหลือง: ไม่แนะนำ</span>
+          </div>
+          <div class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-emerald-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำ</span>
+          </div>
+          <div class="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/30 px-2.5 py-1.5 rounded-lg text-sky-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 shrink-0"></span><span>สีฟ้า: ดีที่สุด</span>
+          </div>
+        `;
+
+        const zones = currentMode === 'eating' ? EATING_ZONES : POSTMEAL_ZONES;
+        guideHeading.textContent = currentMode === 'eating'
+          ? '📋 เกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลากินข้าว 0 - 90 นาที)'
+          : '📋 เกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลาหลังกินข้าว 0 - 10 ชั่วโมง)';
+
+        guideGrid.innerHTML = zones.map(z => {
+          const c = COLORS[z.color];
+          const jumpSec = currentMode === 'eating'
+            ? Math.round(((z.start + z.end) / 2) * 60)
+            : Math.round(((z.start + z.end) / 2) * 3600);
+          return `
+            <button onclick="jumpToTime(${jumpSec})" class="text-left p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border ${c.border} transition group flex flex-col justify-between gap-2">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="inline-flex items-center gap-1.5 text-xs font-bold ${c.text}">
+                    <span class="w-2 h-2 rounded-full ${c.dot}"></span>
+                    ${z.rangeText}
+                  </span>
+                  <span class="text-[11px] text-slate-500 group-hover:text-sky-400 transition">จำลอง ↗</span>
                 </div>
-            </div>
-            <div class="text-right">
-                <span class="text-xs text-slate-400 block">มุมการหมุนเข็ม</span>
-                <div class="flex items-baseline justify-end gap-1">
-                    <span id="readoutAngle" class="font-digital text-lg sm:text-xl font-bold text-slate-200">0.0</span>
-                    <span class="text-xs text-slate-400">องศา (CW)</span>
+                <div class="text-sm font-bold text-white mb-1">${z.badge.split('•')[1].trim()}</div>
+                <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${z.desc}</p>
+              </div>
+            </button>
+          `;
+        }).join('');
+
+      } else {
+        // 24-Hour Clock Legend (Green = แนะนำให้กิน, Yellow = อาจจะแนะนำ, Red = ไม่แนะนำให้กิน)
+        legendEl.className = 'w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs';
+        legendEl.innerHTML = `
+          <div class="flex items-center justify-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-emerald-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำให้กิน</span>
+          </div>
+          <div class="flex items-center justify-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-amber-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span><span>สีเหลือง: อาจจะแนะนำ</span>
+          </div>
+          <div class="flex items-center justify-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-lg text-red-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ไม่แนะนำ</span>
+          </div>
+        `;
+
+        guideHeading.textContent = '📋 ตารางช่วงเวลามื้ออาหารตลอด 24 ชั่วโมง (คลิกเพื่อจำลองเวลาบนหน้าปัด)';
+        guideGrid.innerHTML = CLOCK24_ZONES.map(z => {
+          const c = COLORS[z.color];
+          const midMin = Math.round(((z.startHour + z.endHour) / 2) * 60);
+          return `
+            <button onclick="jumpToSim24(${midMin})" class="text-left p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border ${c.border} transition group flex flex-col justify-between gap-2">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="inline-flex items-center gap-1.5 text-xs font-bold ${c.text}">
+                    <span class="w-2 h-2 rounded-full ${c.dot}"></span>
+                    ${z.rangeText.split('(')[0].trim()}
+                  </span>
+                  <span class="text-[11px] text-slate-500 group-hover:text-sky-400 transition">ดูเวลา ↗</span>
                 </div>
-            </div>
-        </div>
-
-        <!-- แถบเลื่อน Slider ควบคุม 0 - 9000 RPM -->
-        <div class="my-4">
-            <input 
-                type="range" 
-                id="rpmSlider" 
-                min="0" 
-                max="9000" 
-                step="10" 
-                value="0" 
-                class="w-full sport-slider"
-                aria-label="ปรับรอบเครื่องยนต์ 0 ถึง 9000 RPM"
-            >
-            <div class="flex justify-between text-[11px] font-digital text-slate-500 mt-1.5 px-1">
-                <span>0</span>
-                <span>3000 (90°)</span>
-                <span>6000 (180°)</span>
-                <span class="text-red-500 font-bold">9000 (270°)</span>
-            </div>
-        </div>
-
-        <!-- ปุ่มควบคุมด่วนและโหมดทดสอบเร่งเครื่องอัตโนมัติ -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-            <button id="btnIdle" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-semibold text-slate-200 border border-slate-700 transition">
-                เดินเบา (850)
+                <div class="text-sm font-bold text-white mb-1">${z.badge.split('•')[1].trim()}</div>
+                <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${z.title}</p>
+              </div>
             </button>
-            <button id="btn3k" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-semibold text-cyan-300 border border-slate-700 transition">
-                3,000 RPM
-            </button>
-            <button id="btn6k" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-semibold text-amber-300 border border-slate-700 transition">
-                6,000 RPM
-            </button>
-            <button id="btnAutoRev" class="px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-xs font-bold text-white shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-1.5">
-                <span id="autoRevIcon">▶</span>
-                <span id="autoRevLabel">เร่งเครื่อง</span>
-            </button>
-        </div>
-    </div>
+          `;
+        }).join('');
+      }
+    }
 
-    <script>
-        /**
-         * การคำนวณพิกัดและมุมองศาของมาตรวัดรอบ:
-         * - จุดศูนย์กลาง SVG: (200, 200)
-         * - เลข 0 อยู่ด้านล่างสุด (ตำแหน่ง 6 นาฬิกา)
-         *   -> ในระบบพิกัด SVG (0° = 3 นาฬิกา, 90° = 6 นาฬิกา, 180° = 9 นาฬิกา, 270° = 12 นาฬิกา)
-         *   -> ดังนั้น เลข 0 เริ่มต้นที่มุม 90° ของวงกลม SVG
-         * - หมุนตามเข็มนาฬิกา (Clockwise) เพิ่มมุมทีละ 30° ต่อ 1,000 RPM (หรือ 90° ต่อ 3,000 RPM):
-         *   - 0 RPM -> 0° การหมุน (ตำแหน่ง 90° บนวงกลม = 6 นาฬิกา / ด้านล่างสุด)
-         *   - 3000 RPM -> 90° การหมุน (ตำแหน่ง 180° บนวงกลม = 9 นาฬิกา / ซ้ายสุด)
-         *   - 6000 RPM -> 180° การหมุน (ตำแหน่ง 270° บนวงกลม = 12 นาฬิกา / บนสุด)
-         *   - 9000 RPM -> 270° การหมุน (ตำแหน่ง 360°/0° บนวงกลม = 3 นาฬิกา / ขวาสุด)
-         */
+    /**
+     * ============================================================================
+     * MODE SWITCHING & INTERACTION HANDLERS
+     * ============================================================================
+     */
+    function switchMode(mode) {
+      currentMode = mode;
 
-        const CX = 200;
-        const CY = 200;
-        const START_SVG_ANGLE = 90; // 6 นาฬิกา (ด้านล่างสุด)
-        const TOTAL_SWEEP = 270;    // กวาดตามเข็มนาฬิกา 270 องศา
-        const MAX_RPM = 9000;
-        const REV_LIMIT_RPM = 7000; // รอบตัดที่ 7,000 RPM
+      // Update Tab Styles
+      document.querySelectorAll('.mode-tab').forEach(btn => {
+        btn.className = 'mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60';
+      });
+      const activeBtn = document.getElementById(`tab-${mode}`);
+      activeBtn.className = 'mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-500 text-slate-950 shadow-md shadow-sky-500/25';
 
-        // อ้างอิง DOM Elements
-        const ticksGroup = document.getElementById('ticksGroup');
-        const numbersGroup = document.getElementById('numbersGroup');
-        const needleGroup = document.getElementById('needleGroup');
-        const trackArc = document.getElementById('trackArc');
-        const redlineZoneArc = document.getElementById('redlineZoneArc');
-        const progressArc = document.getElementById('progressArc');
-        
-        const rpmSlider = document.getElementById('rpmSlider');
-        const digitalRpmText = document.getElementById('digitalRpmText');
-        const readoutRpm = document.getElementById('readoutRpm');
-        const readoutAngle = document.getElementById('readoutAngle');
-        
-        const shiftLight = document.getElementById('shiftLight');
-        const shiftText = document.getElementById('shiftText');
-        const shiftDots = [
-            document.getElementById('shiftDot1'),
-            document.getElementById('shiftDot2'),
-            document.getElementById('shiftDot3'),
-            document.getElementById('shiftDot4')
-        ];
+      // Configure Panels per Mode
+      const timerControls = document.getElementById('timer-controls');
+      const clock24Controls = document.getElementById('clock24-controls');
+      const slider = document.getElementById('time-slider');
 
-        const btnIdle = document.getElementById('btnIdle');
-        const btn3k = document.getElementById('btn3k');
-        const btn6k = document.getElementById('btn6k');
-        const btnAutoRev = document.getElementById('btnAutoRev');
-        const autoRevIcon = document.getElementById('autoRevIcon');
-        const autoRevLabel = document.getElementById('autoRevLabel');
+      if (mode === 'eating') {
+        document.getElementById('dial-badge').textContent = 'หน้าปัด 0 - 90 นาที (กวาด 270°)';
+        document.getElementById('dial-title').textContent = 'หน้าปัดเข็มจับเวลากินข้าว';
+        document.getElementById('dial-geometry-hint').textContent = 'เริ่ม 6 นาฬิกา (0) → สุด 3 นาฬิกา (90)';
+        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: นาที : วินาที (MM:SS)';
+        document.getElementById('digital-sub-header').textContent = 'เวลาในการกินข้าว (EATING DURATION)';
 
-        // ฟังก์ชันแปลงพิกัดเชิงขั้ว (Polar) เป็นพิกัดฉาก (Cartesian)
-        function polarToCartesian(cx, cy, radius, angleInDegrees) {
-            const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
-            return {
-                x: cx + radius * Math.cos(angleInRadians),
-                y: cy + radius * Math.sin(angleInRadians)
-            };
-        }
+        timerControls.classList.remove('hidden');
+        clock24Controls.classList.add('hidden');
+        clock24Controls.classList.remove('flex');
 
-        // ฟังก์ชันสร้าง SVG Path สำหรับส่วนโค้ง (Arc) ตามเข็มนาฬิกา
-        function describeArc(cx, cy, radius, startAngle, endAngle) {
-            const start = polarToCartesian(cx, cy, radius, startAngle);
-            const end = polarToCartesian(cx, cy, radius, endAngle);
-            const sweepAngle = endAngle - startAngle;
-            const largeArcFlag = sweepAngle <= 180 ? "0" : "1";
-            // sweepFlag = 1 หมายถึงวาดตามเข็มนาฬิกา
-            return [
-                "M", start.x, start.y,
-                "A", radius, radius, 0, largeArcFlag, 1, end.x, end.y
-            ].join(" ");
-        }
+        slider.max = 5400; // 90 mins
+        slider.step = 15;
+        slider.value = eatingSeconds;
+      } else if (mode === 'postmeal') {
+        document.getElementById('dial-badge').textContent = 'หน้าปัด 0 - 10 ชั่วโมง (กวาด 270°)';
+        document.getElementById('dial-title').textContent = 'หน้าปัดเข็มจับเวลาหลังกินข้าว';
+        document.getElementById('dial-geometry-hint').textContent = 'เริ่ม 6 นาฬิกา (0) → สุด 3 นาฬิกา (10)';
+        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: ชั่วโมง : นาที : วินาที';
+        document.getElementById('digital-sub-header').textContent = 'ระยะเวลาหลังมื้ออาหาร (POST-MEAL)';
 
-        // สร้างสเกลหน้าปัดทั้งหมด (ขีดหลัก ขีดย่อย และตัวเลข 0 - 9)
-        function initGaugeDial() {
-            // 1. วาดแถบโค้งพื้นหลัง 0 - 9000 RPM (90° ถึง 360°)
-            trackArc.setAttribute('d', describeArc(CX, CY, 168, START_SVG_ANGLE, START_SVG_ANGLE + TOTAL_SWEEP));
+        timerControls.classList.remove('hidden');
+        clock24Controls.classList.add('hidden');
+        clock24Controls.classList.remove('flex');
 
-            // 2. วาดแถบโค้งโซน Redline / รอบตัด 7000 - 9000 RPM (300° ถึง 360°)
-            const redlineStartAngle = START_SVG_ANGLE + (REV_LIMIT_RPM / MAX_RPM) * TOTAL_SWEEP;
-            redlineZoneArc.setAttribute('d', describeArc(CX, CY, 168, redlineStartAngle, START_SVG_ANGLE + TOTAL_SWEEP));
+        slider.max = 36000; // 10 hours
+        slider.step = 300;  // 5 mins step
+        slider.value = postMealSeconds;
+      } else {
+        document.getElementById('dial-badge').textContent = 'หน้าปัด 24 ชั่วโมงเต็มวง (360°)';
+        document.getElementById('dial-title').textContent = 'หน้าปัดนาฬิกา 24 ชม. & ช่วงเวลาอาหาร';
+        document.getElementById('dial-geometry-hint').textContent = '00 น. ด้านบน • 12 น. ด้านล่าง';
+        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: นาฬิกา 24 ชม. (HH:MM:SS)';
+        document.getElementById('digital-sub-header').textContent = 'เวลาปัจจุบัน / เวลาจำลอง (24-HOUR TIME)';
 
-            // 3. วาดขีดสเกลย่อยทุกๆ 200 RPM (รวม 45 ช่อง)
-            const totalSubSteps = 45; // 9000 / 200 = 45
-            for (let i = 0; i <= totalSubSteps; i++) {
-                const currentRpm = i * 200;
-                const progress = currentRpm / MAX_RPM;
-                const svgAngle = START_SVG_ANGLE + progress * TOTAL_SWEEP;
-                
-                const isMajor = (i % 5 === 0);     // ทุกๆ 1000 RPM (เลข 0-9)
-                const isRedline = (currentRpm >= REV_LIMIT_RPM);
+        timerControls.classList.add('hidden');
+        clock24Controls.classList.remove('hidden');
+        clock24Controls.classList.add('flex');
+      }
 
-                const outerR = 150;
-                const innerR = isMajor ? 130 : 135;
-                
-                const p1 = polarToCartesian(CX, CY, outerR, svgAngle);
-                const p2 = polarToCartesian(CX, CY, innerR, svgAngle);
+      renderLegendAndGuide();
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-                const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                tick.setAttribute("x1", p1.x);
-                tick.setAttribute("y1", p1.y);
-                tick.setAttribute("x2", p2.x);
-                tick.setAttribute("y2", p2.y);
+    function startTimer() {
+      if (currentMode === 'eating') {
+        eatingRunning = true;
+      } else if (currentMode === 'postmeal') {
+        postMealRunning = true;
+      }
+    }
 
-                if (isMajor) {
-                    tick.setAttribute("stroke", isRedline ? "#ff2a2a" : "#ffffff");
-                    tick.setAttribute("stroke-width", "3.5");
-                    tick.setAttribute("stroke-linecap", "round");
-                    if (isRedline) tick.setAttribute("filter", "url(#redGlow)");
-                } else {
-                    tick.setAttribute("stroke", isRedline ? "#ef4444" : "#64748b");
-                    tick.setAttribute("stroke-width", "1.5");
-                }
+    function pauseTimer() {
+      if (currentMode === 'eating') {
+        eatingRunning = false;
+      } else if (currentMode === 'postmeal') {
+        postMealRunning = false;
+      }
+    }
 
-                ticksGroup.appendChild(tick);
+    function resetTimer() {
+      if (currentMode === 'eating') {
+        eatingRunning = false;
+        eatingSeconds = 0;
+      } else if (currentMode === 'postmeal') {
+        postMealRunning = false;
+        postMealSeconds = 0;
+      }
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-                // 4. วาดตัวเลข 0 ถึง 9 สำหรับขีดหลัก
-                if (isMajor) {
-                    const numValue = currentRpm / 1000;
-                    const textRadius = 132;
-                    const textPos = polarToCartesian(CX, CY, textRadius, svgAngle);
+    function onSliderInput(val) {
+      const num = parseInt(val, 10);
+      if (currentMode === 'eating') {
+        eatingSeconds = num;
+      } else if (currentMode === 'postmeal') {
+        postMealSeconds = num;
+      }
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-                    const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    textEl.setAttribute("x", textPos.x);
-                    textEl.setAttribute("y", textPos.y);
-                    textEl.setAttribute("text-anchor", "middle");
-                    textEl.setAttribute("dominant-baseline", "central");
-                    textEl.setAttribute("font-family", "Exo 2, sans-serif");
-                    textEl.setAttribute("font-weight", "500");
-                    
-                    // เน้นขนาดตัวเลขหลัก 0, 3, 6, 9 ให้เด่นชัดขึ้นเล็กน้อย
-                    const isCardinal = (numValue % 3 === 0);
-                    textEl.setAttribute("font-size", isCardinal ? "30" : "30");
-                    textEl.setAttribute("fill", isRedline ? "#ff3b3b" : (isCardinal ? "#ffffff" : "#cbd5e1"));
-                    
-                    if (isRedline) {
-                        textEl.setAttribute("filter", "url(#redGlow)");
-                    }
+    function jumpToTime(seconds) {
+      if (currentMode === 'eating') {
+        eatingSeconds = Math.min(seconds, 5400);
+      } else if (currentMode === 'postmeal') {
+        postMealSeconds = Math.min(seconds, 36000);
+      }
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-                    textEl.textContent = numValue;
-                    numbersGroup.appendChild(textEl);
-                }
-            }
-        }
+    function toggleSim24(checked) {
+      sim24Enabled = checked;
+      const box = document.getElementById('sim24-slider-box');
+      if (checked) {
+        box.classList.remove('hidden');
+        const now = new Date();
+        sim24Minutes = now.getHours() * 60 + now.getMinutes();
+        document.getElementById('sim24-slider').value = sim24Minutes;
+        document.getElementById('sim24-val-label').textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())} น.`;
+      } else {
+        box.classList.add('hidden');
+      }
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-        // ตัวแปรจัดการแอนิเมชันที่ลื่นไหล
-        let targetRpm = 0;
-        let currentDisplayRpm = 0;
-        let isAutoRevving = false;
-        let autoRevPhase = 0;
-        let lastTimestamp = 0;
+    function onSim24Input(val) {
+      sim24Minutes = parseInt(val, 10);
+      const h = Math.floor(sim24Minutes / 60);
+      const m = sim24Minutes % 60;
+      document.getElementById('sim24-val-label').textContent = `${pad2(h)}:${pad2(m)} น.`;
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-        // ฟังก์ชันอัปเดตการแสดงผลของเข็มและตัวเลขทั้งหมด
-        function renderGauge(rpm) {
-            // จำกัดขอบเขต 0 - 9000
-            const clampedRpm = Math.max(0, Math.min(MAX_RPM, rpm));
-            
-            // คำนวณมุมการหมุนตามเข็มนาฬิกา (0 ถึง 270 องศา)
-            const rotationDeg = (clampedRpm / MAX_RPM) * TOTAL_SWEEP;
-            
-            // หมุนเข็ม (เข็มถูกวาดเริ่มต้นชี้ลง 6 นาฬิกา ดังนั้น rotate(rotationDeg) จะหมุนตามเข็มนาฬิกาตรงเป๊ะ)
-            needleGroup.setAttribute("transform", `translate(${CX}, ${CY}) rotate(${rotationDeg})`);
+    function jumpToSim24(totalMinutes) {
+      const toggle = document.getElementById('sim24-toggle');
+      toggle.checked = true;
+      sim24Enabled = true;
+      document.getElementById('sim24-slider-box').classList.remove('hidden');
+      sim24Minutes = totalMinutes % 1440;
+      document.getElementById('sim24-slider').value = sim24Minutes;
+      const h = Math.floor(sim24Minutes / 60);
+      const m = sim24Minutes % 60;
+      document.getElementById('sim24-val-label').textContent = `${pad2(h)}:${pad2(m)} น.`;
+      renderDial();
+      updateDigitalAndStatus();
+    }
 
-            // อัปเดตแถบแสงโค้งที่วิ่งตามเข็ม
-            if (rotationDeg > 0.5) {
-                progressArc.setAttribute("d", describeArc(CX, CY, 168, START_SVG_ANGLE, START_SVG_ANGLE + rotationDeg));
-            } else {
-                progressArc.setAttribute("d", "");
-            }
+    /**
+     * ============================================================================
+     * MASTER 1-SECOND HEARTBEAT LOOP
+     * ============================================================================
+     */
+    setInterval(() => {
+      let needsRender = false;
 
-            // อัปเดตตัวเลขดิจิทัล
-            const roundedRpm = Math.round(clampedRpm);
-            digitalRpmText.textContent = roundedRpm;
-            readoutRpm.textContent = roundedRpm.toLocaleString();
-            readoutAngle.textContent = rotationDeg.toFixed(1);
+      if (eatingRunning && eatingSeconds < 5400) {
+        eatingSeconds++;
+        if (eatingSeconds >= 5400) eatingRunning = false;
+        if (currentMode === 'eating') needsRender = true;
+      }
 
-            // เปลี่ยนสีตัวเลขตามโซนรอบเครื่อง
-            if (roundedRpm >= REV_LIMIT_RPM) {
-                digitalRpmText.setAttribute("fill", "#ff2a2a");
-                readoutRpm.className = "font-digital text-2xl sm:text-3xl font-bold text-red-500";
-            } else if (roundedRpm >= 5000) {
-                digitalRpmText.setAttribute("fill", "#f59e0b");
-                readoutRpm.className = "font-digital text-2xl sm:text-3xl font-bold text-amber-400";
-            } else {
-                digitalRpmText.setAttribute("fill", "#00d2ff");
-                readoutRpm.className = "font-digital text-2xl sm:text-3xl font-bold text-cyan-400";
-            }
+      if (postMealRunning && postMealSeconds < 36000) {
+        postMealSeconds++;
+        if (postMealSeconds >= 36000) postMealRunning = false;
+        if (currentMode === 'postmeal') needsRender = true;
+      }
 
-            // จัดการไฟ Shift Light เตือนเมื่อเข้าใกล้และอยู่ในโซนรอบตัด (7,000+ RPM)
-            updateShiftLight(roundedRpm);
-        }
+      if (currentMode === 'clock24' && !sim24Enabled) {
+        needsRender = true;
+      }
 
-        // อัปเดตไฟ Shift Light ด้านบนหน้าปัด
-        function updateShiftLight(rpm) {
-            // ระดับไฟติดทีละดวงตั้งแต่ 5500 -> 6000 -> 6500 -> 7000 (รอบตัด)
-            shiftDots[0].style.backgroundColor = rpm >= 5500 ? "#22c55e" : "#334155";
-            shiftDots[1].style.backgroundColor = rpm >= 6000 ? "#eab308" : "#334155";
-            shiftDots[2].style.backgroundColor = rpm >= 6500 ? "#f97316" : "#334155";
-            shiftDots[3].style.backgroundColor = rpm >= REV_LIMIT_RPM ? "#ef4444" : "#334155";
+      if (needsRender) {
+        renderDial();
+        updateDigitalAndStatus();
+      }
+    }, 1000);
 
-            if (rpm >= REV_LIMIT_RPM) {
-                shiftLight.classList.add("redline-flash", "border-red-500", "bg-red-950/90");
-                shiftText.classList.remove("text-slate-500");
-                shiftText.classList.add("text-red-400");
-                shiftText.textContent = "LIMIT";
-                shiftDots.forEach(d => d.style.backgroundColor = "#ff1e1e");
-            } else {
-                shiftLight.classList.remove("redline-flash", "border-red-500", "bg-red-950/90");
-                shiftText.classList.add("text-slate-500");
-                shiftText.classList.remove("text-red-400");
-                shiftText.textContent = "SHIFT";
-            }
-        }
-
-        // ลูปแอนิเมชันหลัก (Animation Loop) เพื่อให้เข็มเคลื่อนที่นุ่มนวลเหมือนเข็มจริงมีแรงเฉื่อย
-        function animationLoop(timestamp) {
-            if (!lastTimestamp) lastTimestamp = timestamp;
-            const dt = (timestamp - lastTimestamp) / 1000;
-            lastTimestamp = timestamp;
-
-            // หากเปิดโหมดเร่งเครื่องอัตโนมัติ (Auto Revving Simulation) โดยตั้งรอบตัดไว้ที่ 7,000 RPM
-            if (isAutoRevving) {
-                autoRevPhase += dt;
-                // จำลองการเร่งเครื่องสับเกียร์ 1 -> 2 -> 3 -> ตัดรอบที่ 7,000 RPM
-                const cycle = autoRevPhase % 6.5;
-                if (cycle < 1.8) {
-                    // เกียร์ 1: เร่งจาก 1000 ไปชนรอบตัด 7000
-                    targetRpm = 1000 + (cycle / 1.8) * 6000;
-                } else if (cycle < 3.4) {
-                    // เกียร์ 2: สับเกียร์ตกลงมาที่ 4200 แล้วลากไปชนรอบตัด 7000
-                    const sub = (cycle - 1.8) / 1.6;
-                    targetRpm = 4200 + sub * 2800;
-                } else if (cycle < 5.2) {
-                    // เกียร์ 3: สับเกียร์ตกลงมาที่ 4800 แล้วลากไปติดรอบตัดที่ 7,000 RPM
-                    const sub = (cycle - 3.4) / 1.8;
-                    const rawRpm = 4800 + sub * 2800;
-                    // เมื่อถึง 7,000 RPM ให้เกิดอาการรอบตัดเด้งกลับ (Rev Limiter Bounce) ระหว่าง 6,850 - 7,050 RPM
-                    if (rawRpm >= REV_LIMIT_RPM) {
-                        targetRpm = (REV_LIMIT_RPM - 50) + Math.sin(timestamp * 0.085) * 120;
-                    } else {
-                        targetRpm = rawRpm;
-                    }
-                } else {
-                    // ถอนคันเร่งกลับสู่รอบเดินเบา
-                    const sub = (cycle - 5.2) / 1.3;
-                    targetRpm = REV_LIMIT_RPM * (1 - sub) + 850 * sub;
-                }
-                rpmSlider.value = Math.round(targetRpm);
-            }
-
-            // ระบบหน่วงแรงเฉื่อย (Spring/Damping Interpolation) ให้เข็มขยับสมจริง
-            const lerpSpeed = isAutoRevving ? 18 : 22;
-            const diff = targetRpm - currentDisplayRpm;
-            if (Math.abs(diff) > 0.5) {
-                currentDisplayRpm += diff * Math.min(1, dt * lerpSpeed);
-            } else {
-                currentDisplayRpm = targetRpm;
-            }
-
-            renderGauge(currentDisplayRpm);
-            requestAnimationFrame(animationLoop);
-        }
-
-        // ฟังก์ชันเปิด/ปิดโหมดเร่งเครื่องอัตโนมัติ
-        function toggleAutoRev(forceState) {
-            isAutoRevving = typeof forceState === 'boolean' ? forceState : !isAutoRevving;
-            if (isAutoRevving) {
-                autoRevPhase = 0;
-                autoRevIcon.textContent = "■";
-                autoRevLabel.textContent = "หยุดทดสอบ";
-                btnAutoRev.classList.replace("from-red-600", "from-amber-600");
-                btnAutoRev.classList.replace("to-rose-600", "to-orange-600");
-            } else {
-                autoRevIcon.textContent = "▶";
-                autoRevLabel.textContent = "เร่งเครื่อง";
-                btnAutoRev.classList.replace("from-amber-600", "from-red-600");
-                btnAutoRev.classList.replace("to-orange-600", "to-rose-600");
-            }
-        }
-
-        // Event Listeners สำหรับการควบคุม
-        rpmSlider.addEventListener('input', (e) => {
-            if (isAutoRevving) toggleAutoRev(false);
-            targetRpm = parseFloat(e.target.value);
-        });
-
-        btnIdle.addEventListener('click', () => {
-            toggleAutoRev(false);
-            targetRpm = 850;
-            rpmSlider.value = 850;
-        });
-
-        btn3k.addEventListener('click', () => {
-            toggleAutoRev(false);
-            targetRpm = 3000;
-            rpmSlider.value = 3000;
-        });
-
-        btn6k.addEventListener('click', () => {
-            toggleAutoRev(false);
-            targetRpm = 6000;
-            rpmSlider.value = 6000;
-        });
-
-        btnAutoRev.addEventListener('click', () => {
-            toggleAutoRev();
-        });
-
-        // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บเสร็จ
-        window.onload = function () {
-            initGaugeDial();
-            renderGauge(0);
-            requestAnimationFrame(animationLoop);
-        };
-    </script>
+    // Initial Boot
+    window.addEventListener('DOMContentLoaded', () => {
+      switchMode('eating');
+    });
+  </script>
 </body>
 </html>
