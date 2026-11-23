@@ -47,7 +47,7 @@
       font-synthesis: none;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      font-size: clamp(5.4rem, 6.2vw, 5.3rem);
+      font-size: clamp(4.4rem, 6.2vw, 5.3rem);
       line-height: 1.02;
       letter-spacing: 0.05em;
       font-variant-numeric: tabular-nums;
@@ -844,7 +844,7 @@
         const activeZone = isEating ? getActiveEatingZone(currentVal) : getActivePostMealZone(currentVal);
         const handHex = COLORS[activeZone.color].hex;
 
-        const tip = polarToCartesian(cx, cy, tickOuterR - 14, handDeg);
+        const tip = polarToCartesian(cx, cy, tickOuterR - 1, handDeg);
         const tail = polarToCartesian(cx, cy, 24, handDeg + 180);
 
         html += `
@@ -907,7 +907,7 @@
 
         // Minute Hand (1 revolution per 60 minutes)
         const minDeg = startBaseDeg + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
-        const mTip = polarToCartesian(cx, cy, tickOuterR - 14, minDeg);
+        const mTip = polarToCartesian(cx, cy, tickOuterR - 1, minDeg);
         const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
 
         // Second Hand (1 revolution per 60 seconds)
