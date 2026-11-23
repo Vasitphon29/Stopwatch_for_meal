@@ -1,787 +1,687 @@
 <!DOCTYPE html>
 <html lang="th" class="dark">
-<head>
+<head> 
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบจับเวลาการกินข้าวและการย่อยอาหาร | Meal & Digestion Horology</title>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ระบบจับเวลาการกินข้าวและการย่อยอาหาร (Meal & Digestion Timer)</title>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Google Fonts: Exo 2 (Dial Numbers), Prompt/Noto Sans Thai (Thai UI), Share Tech Mono & Orbitron (Digital Fallback) -->
+
+  <!-- Google Fonts: Exo 2 (Thin/Light/Regular/Medium/SemiBold), Noto Sans Thai, Orbitron & Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Orbitron:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  
-  <!-- Digital-7 Mono Webfont CDN with Local/Fallback support -->
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@100;200;300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Orbitron:wght@400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Digital-7 Mono Webfont CDN -->
   <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
 
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Noto Sans Thai"', 'sans-serif'],
-            exo: ['"Exo 2"', 'sans-serif'],
-            digital: ['"Digital-7 Mono"', '"Share Tech Mono"', '"Orbitron"', 'monospace'],
-          },
-          colors: {
-            slate: {
-              850: '#151e32',
-              925: '#0b101d',
-              950: '#070a13',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
-    /* Custom Scrollbar & Glassmorphism Polish */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
-      background: radial-gradient(circle at 15% 15%, #17233b 0%, #090d16 55%, #05070c 100%);
+      font-family: 'Noto Sans Thai', 'Exo 2', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 55%, #020617 100%);
       color: #f8fafc;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.72);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(148, 163, 184, 0.14);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.65);
-    }
-
+    /* Digital Clock Display Box */
     .digital-screen {
-      background: linear-gradient(180deg, #060a10 0%, #0c1320 100%);
+      background: linear-gradient(180deg, #040812 0%, #091224 100%);
       border: 1px solid rgba(56, 189, 248, 0.22);
-      box-shadow: inset 0 4px 18px rgba(0, 0, 0, 0.85), 0 0 20px rgba(14, 165, 233, 0.08);
+      box-shadow:
+        inset 0 2px 18px rgba(0, 0, 0, 0.9),
+        0 8px 28px rgba(2, 6, 23, 0.65);
     }
 
+    /* Large & Thin Digital-7 Mono Readout */
     .digital-digits {
-      font-family: 'Digital-7 Mono', 'Share Tech Mono', monospace;
-      letter-spacing: 0.06em;
+      font-family: 'Digital-7 Mono', 'Share Tech Mono', 'Orbitron', monospace;
+      font-weight: 200;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-size: clamp(3.6rem, 6.4vw, 5.4rem);
+      line-height: 1.02;
+      letter-spacing: 0.05em;
       font-variant-numeric: tabular-nums;
+      transition: color 0.25s ease, text-shadow 0.25s ease;
     }
 
+    /* Large & Thin Exo 2 Analog Dial Numbers */
     .exo-dial-text {
       font-family: 'Exo 2', sans-serif;
-      font-weight: 500;
+      font-weight: 200;
+      letter-spacing: 0.02em;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
       user-select: none;
     }
 
-    /* Custom Range Slider */
-    input[type="range"] {
+    .exo-dial-subtext {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      user-select: none;
+    }
+
+    /* Custom Range Slider for 24h Simulator */
+    input[type="range"].sim-slider {
       -webkit-appearance: none;
       appearance: none;
-      background: transparent;
-      cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
       height: 8px;
       border-radius: 999px;
-      background: rgba(51, 65, 85, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: #1e293b;
+      outline: none;
+      border: 1px solid rgba(148, 163, 184, 0.25);
     }
-    input[type="range"]::-webkit-slider-thumb {
+
+    input[type="range"].sim-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: #38bdf8;
+      cursor: pointer;
       border: 2px solid #f8fafc;
-      margin-top: -7px;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
-      transition: transform 0.15s ease;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.65);
     }
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
+
+    input[type="range"].sim-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      border: 2px solid #f8fafc;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.65);
+    }
+
+    /* Subtle pulse for active timer badge */
+    @keyframes softPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .pulse-dot {
+      animation: softPulse 1.6s infinite ease-in-out;
     }
   </style>
 </head>
 <body class="antialiased selection:bg-sky-500/30 selection:text-sky-200">
 
-  <!-- Main App Container -->
-  <div class="max-w-6xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-6">
-    
-    <!-- Header & Mode Switcher -->
-    <header class="glass-panel rounded-3xl p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3"></path>
-          </svg>
-        </div>
+  <div class="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6">
+
+    <!-- Top Header & Mode Switcher -->
+    <header class="bg-slate-900/80 backdrop-blur-md border border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">นาฬิกาโภชนาการและการย่อยอาหาร</h1>
-          <p class="text-xs sm:text-sm text-slate-400">ควบคุมจังหวะการเคี้ยว ระยะพักท้อง และเวลาที่เหมาะสมของแต่ละมื้อ</p>
+          <div class="flex items-center gap-2.5">
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-400/30 text-sky-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3"></path>
+              </svg>
+            </span>
+            <h1 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+              นาฬิกาโภชนาการและการย่อยอาหาร
+            </h1>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            จับเวลาการกินข้าว • ติดตามการย่อยหลังมื้ออาหาร • แนะนำช่วงเวลามื้ออาหาร 24 ชม. (นับต่ออัตโนมัติเมื่อสลับแอป)
+          </p>
+        </div>
+
+        <!-- Background Sync Status Pill -->
+        <div id="persistence-pill" class="self-start md:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/90 border border-slate-700/80 text-xs text-slate-300">
+          <span id="persistence-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="persistence-text">พร้อมบันทึกเวลาเบื้องหลัง</span>
         </div>
       </div>
 
       <!-- 3 Mode Navigation Tabs -->
-      <nav class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800/80" role="tablist">
-        <button id="tab-eating" onclick="switchMode('eating')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-500 text-slate-950 shadow-md shadow-sky-500/25">
-          <span>🍽️</span>
-          <span>1. จับเวลากินข้าว</span>
+      <nav class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4" aria-label="เลือกโหมดการทำงาน">
+        <button type="button" id="tab-eating" onclick="switchMode('eating')"
+          class="mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm sm:text-base transition-all border cursor-pointer">
+          <span class="text-lg">🍽️</span>
+          <span>1. จับเวลากินข้าว (0–90 นาที)</span>
         </button>
-        <button id="tab-postmeal" onclick="switchMode('postmeal')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60">
-          <span>⏳</span>
-          <span>2. หลังกินข้าว</span>
+
+        <button type="button" id="tab-postmeal" onclick="switchMode('postmeal')"
+          class="mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm sm:text-base transition-all border cursor-pointer">
+          <span class="text-lg">⏳</span>
+          <span>2. จับเวลาหลังกินข้าว (0–10 ชม.)</span>
         </button>
-        <button id="tab-clock24" onclick="switchMode('clock24')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60">
-          <span>🕒</span>
-          <span>3. นาฬิกามื้ออาหาร 24 ชม.</span>
+
+        <button type="button" id="tab-clock24" onclick="switchMode('clock24')"
+          class="mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm sm:text-base transition-all border cursor-pointer">
+          <span class="text-lg">🕒</span>
+          <span>3. นาฬิกาปกติ 24 ชม.</span>
         </button>
       </nav>
     </header>
 
-    <!-- Main Workspace: Strictly Separated Analog Dial Section & Digital Control Section -->
-    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-      
-      <!-- LEFT / TOP PANEL: Custom Analog Dial (Strictly Non-Overlapping) -->
-      <section class="lg:col-span-6 glass-panel rounded-3xl p-5 sm:p-7 flex flex-col items-center justify-between">
-        <div class="w-full flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+    <!-- Main Workspace: Strictly Separated Left (Analog Dial) & Right (Digital Clock + Controls + Guidance) -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+
+      <!-- LEFT PANEL: Analog Dial Card (Zero overlap with Digital Clock) -->
+      <section class="lg:col-span-6 bg-slate-900/85 backdrop-blur-md border border-slate-800/90 rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col items-center justify-between">
+        <div class="w-full flex items-center justify-between border-b border-slate-800/80 pb-3 mb-2">
           <div>
-            <span id="dial-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-500/15 text-sky-300 border border-sky-500/30">
-              หน้าปัด 0 - 90 นาที (270°)
-            </span>
-            <h2 id="dial-title" class="text-lg font-bold text-white mt-1">หน้าปัดเข็มจับเวลากินข้าว</h2>
+            <h2 id="dial-title" class="text-base sm:text-lg font-semibold text-slate-100">
+              หน้าปัดจับเวลากินข้าว (0 - 90 นาที)
+            </h2>
+            <p id="dial-subtitle" class="text-xs text-slate-400">
+              เริ่มเลข 0 ที่ตำแหน่ง 6 นาฬิกา หมุนตามเข็ม 270° ถึงเลข 90 ที่ 3 นาฬิกา
+            </p>
           </div>
-          <div class="text-right text-xs text-slate-300">
-            <div id="dial-geometry-hint">เริ่ม 6 นาฬิกา → สุด 3 นาฬิกา</div>
-            <div class="font-exo text-slate-500">Font: Exo 2</div>
-          </div>
+          <span id="dial-geometry-badge" class="px-2.5 py-1 rounded-lg bg-slate-800 text-sky-300 text-xs font-medium border border-slate-700/70">
+            270° Dial
+          </span>
         </div>
 
         <!-- SVG Analog Dial Container -->
-        <div class="w-full max-w-[500px] aspect-square flex items-center justify-center my-auto py-2">
-          <svg id="analog-dial-svg" viewBox="0 0 400 400" class="w-full h-full drop-shadow-[0_12px_25px_rgba(0,0,0,0.65)]">
-            <!-- Dynamically rendered via JS -->
+        <div class="w-full max-w-[420px] aspect-square flex items-center justify-center my-auto py-1">
+          <svg id="analog-dial-svg" viewBox="0 0 420 420" class="w-full h-full drop-shadow-[0_12px_25px_rgba(0,0,0,0.65)]" role="img" aria-label="หน้าปัดนาฬิกาแบบเข็ม">
+            <!-- Rendered dynamically via JavaScript -->
           </svg>
         </div>
 
-        <!-- Color Legend Strip under the Dial -->
-        <div id="dial-legend" class="w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <!-- Color Legend Strip under Dial -->
+        <div id="dial-legend" class="w-full pt-3 mt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <!-- Populated dynamically per mode -->
         </div>
       </section>
 
-      <!-- RIGHT / BOTTOM PANEL: Digital Clock Display, Controls & Health Guidance -->
-      <section class="lg:col-span-6 flex flex-col gap-6">
-        
-        <!-- Separated Digital Clock Module -->
-        <div class="glass-panel rounded-3xl p-5 sm:p-7 flex flex-col gap-5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-              หน้าจอแสดงผลดิจิตอล (แยกส่วนอิสระ)
+      <!-- RIGHT PANEL: Digital Clock Display, Timer Controls & Health Guidance -->
+      <section class="lg:col-span-6 flex flex-col gap-4 sm:gap-5">
+
+        <!-- Digital Clock Card (Completely separate container from Analog Dial) -->
+        <div class="bg-slate-900/85 backdrop-blur-md border border-slate-800/90 rounded-3xl p-5 sm:p-6 shadow-2xl">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
+              นาฬิกาดิจิตอล (Digital-7 Mono)
             </span>
-            <span id="digital-unit-label" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">
-              รูปแบบ: นาที : วินาที (MM:SS)
+            <span id="running-badge" class="hidden inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+              กำลังนับเวลา
             </span>
           </div>
 
           <!-- Digital 7-Segment Display Box -->
-          <div class="digital-screen rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden">
-            <div id="digital-sub-header" class="text-xs text-sky-400/80 font-medium mb-1 tracking-wide">
+          <div class="digital-screen rounded-2xl px-4 py-6 sm:px-6 sm:py-7 flex flex-col items-center justify-center relative overflow-hidden">
+            <div id="digital-sub-header" class="text-xs text-sky-400/80 font-medium mb-1.5 tracking-wide">
               เวลาที่ผ่านไป (ELAPSED TIME)
             </div>
-            <div id="digital-readout" class="digital-digits text-5xl sm:text-6xl md:text-7xl font-light text-sky-300 drop-shadow-[0_0_12px_rgba(56,189,248,0.45)] select-none">
+            <div id="digital-readout" class="digital-digits text-sky-300 select-none whitespace-nowrap">
               00:00
             </div>
-            <div id="digital-extra-info" class="text-xs sm:text-sm text-slate-400 mt-2 font-medium">
+            <div id="digital-extra-info" class="text-xs sm:text-sm text-slate-400 mt-2.5 font-medium">
               0.0 นาที / สูงสุด 90 นาที
             </div>
           </div>
 
           <!-- Controls for Timer Modes (Eating & Post-Meal) -->
-          <div id="timer-controls" class="flex flex-col gap-4">
-            <div class="grid grid-cols-3 gap-3">
-              <button id="btn-start" onclick="startTimer()" class="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
-                <span>เริ่มจับเวลา</span>
+          <div id="timer-controls-box" class="mt-4 flex flex-col gap-3">
+            <!-- Primary Start/Pause & Reset Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" id="btn-start-pause" onclick="toggleTimer()"
+                class="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-sky-500 hover:bg-sky-400 active:scale-[0.99] text-slate-950 shadow-lg shadow-sky-500/20 transition cursor-pointer">
+                <span id="btn-start-icon">▶</span>
+                <span id="btn-start-label">เริ่มจับเวลา</span>
               </button>
-              <button id="btn-pause" onclick="pauseTimer()" class="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
-                <span>หยุดชั่วคราว</span>
-              </button>
-              <button id="btn-reset" onclick="resetTimer()" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border border-slate-700">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span>รีเซ็ต</span>
+
+              <button type="button" id="btn-reset" onclick="resetTimer()"
+                class="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-slate-800 hover:bg-slate-700 active:scale-[0.99] text-slate-200 border border-slate-700 transition cursor-pointer">
+                <span>↺</span>
+                <span>รีเซ็ต (0)</span>
               </button>
             </div>
 
-            <!-- Interactive Time Simulator Slider -->
-            <div class="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
-              <div class="flex justify-between items-center text-xs mb-2">
-                <span class="text-slate-300 font-medium">🎛️ ลากแถบเพื่อจำลองเวลาและดูคำแนะนำแต่ละช่วงสี:</span>
-                <span id="slider-val-label" class="font-exo font-bold text-sky-400">0 นาที</span>
-              </div>
-              <input id="time-slider" type="range" min="0" max="5400" step="10" value="0" oninput="onSliderInput(this.value)" class="w-full" />
+            <!-- Quick Time Adjustment Buttons -->
+            <div id="quick-adjust-row" class="grid grid-cols-4 gap-2">
+              <!-- Populated per timer mode -->
             </div>
+
+            <!-- One-click Transition Button (Shown in Eating Mode) -->
+            <button type="button" id="btn-finish-eating" onclick="finishEatingAndStartPostMeal()"
+              class="w-full py-3 px-4 rounded-xl font-medium text-sm bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 transition flex items-center justify-center gap-2 cursor-pointer">
+              <span>✅ กินเสร็จแล้ว → เริ่มจับเวลาหลังกินข้าวทันที</span>
+            </button>
           </div>
 
           <!-- Controls for 24-Hour Normal Clock Mode -->
-          <div id="clock24-controls" class="hidden flex-col gap-3">
-            <div class="flex items-center justify-between bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
-              <div>
-                <div class="text-sm font-semibold text-white">โหมดจำลองเวลา 24 ชั่วโมง</div>
-                <div class="text-xs text-slate-400">เปิดเพื่อเลื่อนดูคำแนะนำมื้ออาหารในช่วงเวลาต่างๆ ของวัน</div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="sim24-toggle" onchange="toggleSim24(this.checked)" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+          <div id="clock24-controls-box" class="hidden mt-4 flex flex-col gap-3 bg-slate-950/60 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between">
+              <label for="sim-toggle" class="text-sm font-medium text-slate-200 flex items-center gap-2 cursor-pointer">
+                <span>🎛️ โหมดจำลองเวลา (ทดลองเลื่อนดูช่วงเวลาต่างๆ)</span>
               </label>
+              <button type="button" id="sim-toggle" onclick="toggleSimulator()"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition cursor-pointer">
+                ใช้เวลาจริง (Live)
+              </button>
             </div>
 
-            <div id="sim24-slider-box" class="hidden bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800">
-              <div class="flex justify-between items-center text-xs mb-2">
-                <span class="text-slate-300 font-medium">🕒 เลือกเวลาจำลอง (00:00 - 23:59):</span>
-                <span id="sim24-val-label" class="font-exo font-bold text-sky-400">12:00 น.</span>
+            <div id="sim-slider-wrapper" class="hidden flex flex-col gap-2 pt-1">
+              <div class="flex justify-between text-xs text-slate-400">
+                <span>00:00 น.</span>
+                <span id="sim-time-badge" class="text-sky-400 font-semibold">จำลองเวลา: 12:00 น.</span>
+                <span>23:59 น.</span>
               </div>
-              <input id="sim24-slider" type="range" min="0" max="1439" step="5" value="720" oninput="onSim24Input(this.value)" class="w-full" />
+              <input type="range" id="sim-slider" min="0" max="1439" value="720" oninput="onSimSliderInput(this.value)" class="sim-slider" />
             </div>
           </div>
         </div>
 
-        <!-- Current Zone Status & Detailed Medical/Nutrition Explanation Card -->
-        <div id="status-card" class="glass-panel rounded-3xl p-5 sm:p-6 border-l-8 border-l-red-500 transition-all duration-300 flex-1 flex flex-col justify-between">
-          <div>
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div class="flex items-center gap-2.5">
-                <span id="status-dot" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_12px_#ef4444]"></span>
-                <span id="status-badge" class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
+        <!-- Current Zone Status & Advice Card -->
+        <div id="status-card" class="bg-slate-900/85 backdrop-blur-md border-2 border-red-500/50 rounded-3xl p-5 sm:p-6 shadow-2xl transition-colors duration-300">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span id="status-badge" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-red-500/20 text-red-300 border border-red-500/40">
                   สีแดง • ห้าม / เร็วเกินไป
                 </span>
+                <span id="status-range" class="text-xs text-slate-400 font-medium">
+                  ช่วง 0 – 10 นาที
+                </span>
               </div>
-              <span id="status-range" class="text-xs font-exo font-semibold text-slate-400">
-                ช่วง 0 - 10 นาที
-              </span>
+              <h3 id="status-heading" class="text-lg sm:text-xl font-bold text-white mt-1">
+                เพิ่งเริ่มทานอาหาร เคี้ยวให้ช้าและละเอียด
+              </h3>
             </div>
-
-            <h3 id="status-title" class="text-lg sm:text-xl font-bold text-white mb-2">
-              เคี้ยวเร็วเกินไป สมองยังไม่รับรู้ความอิ่ม
-            </h3>
-            <p id="status-desc" class="text-sm text-slate-300 leading-relaxed">
-              ในช่วง 10 นาทีแรก ฮอร์โมนความอิ่ม (Leptin) ยังไม่ถูกส่งไปยังสมอง การกินเสร็จภายในเวลานี้มักทำให้อาหารไม่ละเอียด กระเพาะทำงานหนัก และเสี่ยงกินเกินความจำเป็น
-            </p>
+            <div id="status-icon" class="text-3xl sm:text-4xl select-none">
+              🛑
+            </div>
           </div>
 
-          <!-- Actionable Tip Box -->
-          <div class="mt-4 pt-3.5 border-t border-slate-800/80 flex items-start gap-2.5 text-xs sm:text-sm text-slate-300">
-            <span class="text-base shrink-0">💡</span>
-            <span id="status-tip"><strong class="text-white">คำแนะนำ:</strong> วางช้อนส้อมลงระหว่างเคี้ยวแต่ละคำ และตั้งเป้าเคี้ยวให้ได้อย่างน้อย 20-30 ครั้งต่อคำ</span>
+          <p id="status-description" class="text-sm sm:text-base text-slate-300 leading-relaxed mt-3">
+            สมองต้องใช้เวลาอย่างน้อย 15–20 นาทีในการหลั่งฮอร์โมนเลปติน (Leptin) เพื่อรับรู้ความอิ่ม การกินเร็วเกินไปทำให้เสี่ยงสำลัก ท้องอืด และได้รับพลังงานเกินความจำเป็น
+          </p>
+
+          <!-- Zone Breakdown Reference List -->
+          <div class="mt-4 pt-4 border-t border-slate-800/90">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
+              เกณฑ์แบ่งระดับสีในโหมดนี้
+            </div>
+            <div id="zone-breakdown-list" class="grid grid-cols-1 gap-2 text-xs sm:text-sm">
+              <!-- Populated dynamically per mode -->
+            </div>
           </div>
         </div>
 
       </section>
     </main>
-
-    <!-- Comprehensive Reference Guide Section -->
-    <section class="glass-panel rounded-3xl p-5 sm:p-7">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-        <h3 id="guide-heading" class="text-base sm:text-lg font-bold text-white">
-          📋 ตารางสรุปเกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลากินข้าว 0 - 90 นาที)
-        </h3>
-        <span class="text-xs text-slate-400">คลิกที่รายการเพื่อจำลองเข็มไปยังช่วงเวลานั้น</span>
-      </div>
-      <div id="guide-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <!-- Populated dynamically per mode -->
-      </div>
-    </section>
-
   </div>
 
   <script>
-    /**
-     * ============================================================================
-     * DATA DEFINITIONS FOR ALL 3 MODES
-     * ============================================================================
-     */
+    // =========================================================================
+    // 1. SAFE STORAGE WRAPPER (Prevents crashes in sandboxed/private iframes)
+    // =========================================================================
+    const STORAGE_KEY = 'meal_digestion_timer_v3';
+
+    function safeLoadState() {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function safeSaveState(data) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updatePersistenceIndicator(true);
+      } catch (err) {
+        updatePersistenceIndicator(false);
+      }
+    }
+
+    function updatePersistenceIndicator(canPersist) {
+      const dot = document.getElementById('persistence-dot');
+      const txt = document.getElementById('persistence-text');
+      if (!dot || !txt) return;
+
+      const isAnyRunning = state.eating.isRunning || state.postmeal.isRunning;
+      if (isAnyRunning) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-dot';
+        txt.textContent = canPersist
+          ? 'กำลังนับเวลาต่อเนื่อง (ปัดไปแอปอื่นได้)'
+          : 'กำลังนับเวลาต่อเนื่องในหน้านี้';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-sky-400';
+        txt.textContent = canPersist
+          ? 'พร้อมบันทึกเวลาเบื้องหลัง'
+          : 'โหมดหน่วยความจำชั่วคราว';
+      }
+    }
+
+    // =========================================================================
+    // 2. COLOR PALETTE & HEALTH ZONES CONFIGURATION
+    // =========================================================================
     const COLORS = {
-      red:    { hex: '#EF4444', bg: 'bg-red-500/15',    border: 'border-red-500/40',    borderLeft: 'border-l-red-500',    text: 'text-red-300',    dot: 'bg-red-500',    shadow: 'shadow-[0_0_12px_#ef4444]', label: 'สีแดง • ห้าม' },
-      yellow: { hex: '#F59E0B', bg: 'bg-amber-500/15',  border: 'border-amber-500/40',  borderLeft: 'border-l-amber-500',  text: 'text-amber-300',  dot: 'bg-amber-500',  shadow: 'shadow-[0_0_12px_#f59e0b]', label: 'สีเหลือง • ไม่แนะนำ' },
-      green:  { hex: '#10B981', bg: 'bg-emerald-500/15',border: 'border-emerald-500/40',borderLeft: 'border-l-emerald-500',text: 'text-emerald-300',dot: 'bg-emerald-500',shadow: 'shadow-[0_0_12px_#10b981]', label: 'สีเขียว • แนะนำ' },
-      blue:   { hex: '#0EA5E9', bg: 'bg-sky-500/15',    border: 'border-sky-500/40',    borderLeft: 'border-l-sky-500',    text: 'text-sky-300',    dot: 'bg-sky-500',    shadow: 'shadow-[0_0_12px_#0ea5e9]', label: 'สีฟ้า • ดีที่สุด' },
+      red: {
+        hex: '#ef4444',
+        badgeBg: 'bg-red-500/20',
+        badgeText: 'text-red-300',
+        badgeBorder: 'border-red-500/40',
+        cardBorder: 'border-red-500/50',
+        label: 'สีแดง'
+      },
+      yellow: {
+        hex: '#eab308',
+        badgeBg: 'bg-yellow-500/20',
+        badgeText: 'text-yellow-300',
+        badgeBorder: 'border-yellow-500/40',
+        cardBorder: 'border-yellow-500/50',
+        label: 'สีเหลือง'
+      },
+      green: {
+        hex: '#22c55e',
+        badgeBg: 'bg-emerald-500/20',
+        badgeText: 'text-emerald-300',
+        badgeBorder: 'border-emerald-500/40',
+        cardBorder: 'border-emerald-500/50',
+        label: 'สีเขียว'
+      },
+      blue: {
+        hex: '#38bdf8',
+        badgeBg: 'bg-sky-500/20',
+        badgeText: 'text-sky-300',
+        badgeBorder: 'border-sky-500/40',
+        cardBorder: 'border-sky-500/50',
+        label: 'สีฟ้า'
+      }
     };
 
-    // MODE 1: Eating Timer (0 to 90 minutes, 270 degrees from 6 o'clock clockwise to 3 o'clock)
+    // Mode 1: Eating Timer (0 - 90 Minutes)
     const EATING_ZONES = [
       {
-        start: 0, end: 15, color: 'red',
-        badge: 'สีแดง • ห้าม (เร็วเกินไป)',
-        rangeText: '0 - 15 นาที',
-        title: 'ห้ามกินเสร็จเร็วเกินไป! สมองยังไม่รับรู้ความอิ่ม',
-        desc: 'ร่างกายต้องใช้เวลาประมาณ 15-20 นาทีในการส่งสัญญาณฮอร์โมนความอิ่ม (Leptin) จากกระเพาะไปยังสมอง การกินเสร็จภายใน 10 นาทีทำให้เคี้ยวไม่ละเอียด ท้องอืด และกินเกินขนาด',
-        tip: 'วางช้อนลงระหว่างคำ เคี้ยวอาหารให้นานขึ้นและจิบน้ำเปล่าเล็กน้อยเพื่อชะลอจังหวะ'
+        start: 0, end: 15, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ห้าม / เร็วเกินไป',
+        rangeText: '0 – 15 นาที',
+        heading: 'กินเร็วเกินไป สมองยังไม่รับรู้ความอิ่ม',
+        description: 'สมองต้องใช้เวลาอย่างน้อย 15–20 นาทีในการหลั่งฮอร์โมนความอิ่ม การรีบกินทำให้เคี้ยวไม่ละเอียด เสี่ยงสำลัก ท้องอืด และกินเกินพอดี'
       },
       {
-        start: 15, end: 20, color: 'yellow',
-        badge: 'สีเหลือง • ไม่แนะนำ',
-        rangeText: '15 - 20 นาที',
-        title: 'ยังค่อนข้างเร็ว ควรยืดเวลาการเคี้ยวอีกนิด',
-        desc: 'กระเพาะอาหารเริ่มรับรู้ปริมาณอาหารบางส่วนแล้ว แต่เอนไซม์ในน้ำลาย (Amylase) ยังคลุกเคล้ากับอาหารได้ไม่เต็มที่ หากหยุดกินตอนนี้มักรู้สึกอยากของหวานต่อ',
-        tip: 'พยายามเคี้ยวให้ละเอียดจนอาหารอ่อนนุ่มก่อนกลืน และพูดคุยหรือพักหายใจระหว่างมื้อ'
+        start: 15, end: 20, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • ไม่แนะนำ',
+        rangeText: '15 – 20 นาที',
+        heading: 'ค่อนข้างเร็ว ควรชะลอจังหวะการเคี้ยว',
+        description: 'น้ำย่อยและเอนไซม์ในน้ำลายยังคลุกเคล้าอาหารได้ไม่เต็มที่ แนะนำให้วางช้อนระหว่างคำและเคี้ยวให้ละเอียดขึ้นอีกนิด'
       },
       {
-        start: 20, end: 30, color: 'green',
-        badge: 'สีเขียว • แนะนำ',
-        rangeText: '20 - 30 นาที',
-        title: 'จังหวะเหมาะสม ระบบย่อยเริ่มทำงานได้ดี',
-        desc: 'เป็นเกณฑ์ขั้นต่ำที่แพทย์และนักโภชนาการแนะนำ ฮอร์โมนความอิ่มเริ่มทำงาน ช่วยลดภาระของกระเพาะอาหารและควบคุมระดับน้ำตาลหลังมื้ออาหารได้ดีขึ้น',
-        tip: 'สังเกตความรู้สึกอิ่มระดับ 80% (Hara Hachi Bu) หากเริ่มอิ่มพอดีสามารถหยุดมื้อได้'
+        start: 20, end: 30, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำ',
+        rangeText: '20 – 30 นาที',
+        heading: 'ระยะเวลาที่ดี ร่างกายเริ่มส่งสัญญาณอิ่ม',
+        description: 'เป็นช่วงเวลาขั้นต่ำที่แนะนำสำหรับการทานอาหาร ระบบย่อยอาหารทำงานได้อย่างราบรื่นและเริ่มรู้สึกอิ่มพอดี'
       },
       {
-        start: 30, end: 40, color: 'blue',
-        badge: 'สีฟ้า • ดีที่สุด (Golden Zone)',
-        rangeText: '30 - 40 นาที',
-        title: 'ช่วงเวลาที่ดีที่สุด! สมดุลทั้งการเคี้ยวและฮอร์โมนอิ่ม',
-        desc: 'จุดสูงสุดของคุณภาพการกินอาหาร สมองรับรู้ความอิ่มอย่างสมบูรณ์ อาหารถูกย่อยเชิงกลอย่างละเอียด ลดความเสี่ยงกรดไหลย้อน ไขมันสะสม และช่วยให้ควบคุมน้ำหนักได้ดีเยี่ยม',
-        tip: 'ยอดเยี่ยมมาก! รักษามาตรฐานเวลานี้ในทุกมื้อหลักเพื่อสุขภาพลำไส้ที่แข็งแรง'
+        start: 30, end: 40, color: 'blue', icon: '💎',
+        statusText: 'สีฟ้า • ดีที่สุด',
+        rangeText: '30 – 40 นาที',
+        heading: 'เวลาทองของการกิน (Optimal Eating Window)',
+        description: 'ดีที่สุดต่อสุขภาพ! เคี้ยวอาหารได้ละเอียด ดูดซึมสารอาหารเต็มประสิทธิภาพ ควบคุมระดับน้ำตาลในเลือดและน้ำหนักตัวได้ดีเยี่ยม'
       },
       {
-        start: 40, end: 60, color: 'green',
-        badge: 'สีเขียว • แนะนำ (มื้อสังสรรค์/มื้อใหญ่)',
-        rangeText: '40 - 60 นาที',
-        title: 'เหมาะสมสำหรับมื้ออาหารที่มีหลายจานหรือทานร่วมกับครอบครัว',
-        desc: 'ยังอยู่ในเกณฑ์ที่ดีและผ่อนคลาย เหมาะกับมื้อที่มีทั้งอาหารคาว ซุป และผลไม้ แต่ควรระวังไม่เผลอตักอาหารเพิ่มเพราะความเพลิดเพลิน',
-        tip: 'ควรรวบช้อนเมื่อทานจานหลักเสร็จ เพื่อไม่ให้กินจุกจิกต่อเนื่องโดยไม่รู้ตัว'
+        start: 35, end: 50, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำ',
+        rangeText: '35 – 50 นาที',
+        heading: 'ทานอย่างผ่อนคลาย เหมาะกับมื้ออาหารหลัก',
+        description: 'ยังอยู่ในเกณฑ์ที่ดีและปลอดภัย เหมาะกับมื้ออาหารที่ทานร่วมกับครอบครัวหรือมีหลายเมนู โดยไม่เร่งรีบจนเกินไป'
       },
       {
-        start: 60, end: 70, color: 'yellow',
-        badge: 'สีเหลือง • ไม่แนะนำ (นานเกินไป)',
-        rangeText: '60 - 70 นาที',
-        title: 'ใช้เวลานานเกินไป อาหารเริ่มเย็นชืดและเสี่ยงกินเกิน',
-        desc: 'การนั่งกินต่อเนื่องนานเกิน 60 นาที ทำให้ระบบย่อยอาหารต้องหลั่งกรดต่อเนื่องเป็นเวลานาน และมักเกิดพฤติกรรมกินเรื่อยๆ จนได้รับพลังงานเกินความจำเป็น',
-        tip: 'ควรยุติมื้ออาหารและเริ่มนับเวลาพักท้องหลังมื้ออาหารได้แล้ว'
+        start: 50, end: 65, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • ไม่แนะนำ',
+        rangeText: '50 – 65 นาที',
+        heading: 'ใช้เวลานานเกินไป ควรเตรียมจบมื้ออาหาร',
+        description: 'การทานต่อเนื่องนานเกิน 50 นาที ทำให้ร่างกายหลั่งอินซูลินอย่างต่อเนื่องและเผลอทานอาหารส่วนเกินโดยไม่รู้ตัว'
       },
       {
-        start: 70, end: 90, color: 'red',
-        badge: 'สีแดง • ห้าม (รบกวนระบบย่อย)',
-        rangeText: '70 - 90 นาที',
-        title: 'ห้ามกินยืดเยื้อเกิน 1:10 ชั่วโมง! รบกวนรอบการย่อยอาหาร',
-        desc: 'การกินอาหารนาน 70 นาทีขึ้นไป ทำให้อินซูลินถูกกระตุ้นค้างเป็นเวลานาน รบกวนกระบวนการทำความสะอาดลำไส้ (MMC) และทำให้รู้สึกอึดอัดแน่นท้อง',
-        tip: 'หยุดรับประทานอาหารทันที ดื่มน้ำเปล่าอุณหภูมิห้อง และเริ่มจับเวลาหลังกินข้าว'
+        start: 65, end: 90, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ห้าม / นานเกินไป',
+        rangeText: '65 – 90 นาที',
+        heading: 'นานเกินเกณฑ์ เสี่ยงกรดไหลย้อนและระบบย่อยล้า',
+        description: 'กระเพาะอาหารต้องหลั่งกรดและบีบตัวตลอดเวลาโดยไม่มีช่วงพัก ควรหยุดทานทันทีและดื่มน้ำเปล่าเล็กน้อย'
       }
     ];
 
-    // MODE 2: Post-Meal Timer (0 to 10 hours, 270 degrees from 6 o'clock clockwise to 3 o'clock)
+    // Mode 2: Post-Meal Digestion Timer (0 - 10 Hours)
     const POSTMEAL_ZONES = [
       {
-        start: 0, end: 2, color: 'red',
-        badge: 'สีแดง • ห้าม (0 - 2 ชม.)',
-        rangeText: '0.0 - 2.0 ชั่วโมงหลังกิน',
-        title: 'ห้ามนอนราบ และห้ามออกกำลังกายหนักเด็ดขาด!',
-        desc: 'อาหารยังอัดแน่นอยู่ในกระเพาะอาหารส่วนต้น การเอนตัวนอนราบจะทำให้กรดและอาหารไหลย้อนขึ้นหลอดอาหาร ส่วนการออกกำลังกายหนักจะดึงเลือดออกจากระบบย่อยทำให้จุกเสียด',
-        tip: 'นั่งตัวตรง หรือเดินย่อยเบาๆ 10-15 นาที ห้ามนอนกลางวันหรือเอนหลังทันที'
+        start: 0, end: 1, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ห้าม',
+        rangeText: '0 – 1 ชั่วโมงหลังกิน',
+        heading: 'ห้ามนอนราบ ห้ามออกกำลังกายหนักทันที',
+        description: 'เลือดกำลังไหลเวียนไปเลี้ยงกระเพาะอาหารอย่างเต็มที่ การนอนราบจะทำให้เกิดกรดไหลย้อน และการออกกำลังกายหนักจะทำให้จุกเสียดและอาหารไม่ย่อย'
       },
       {
-        start: 2, end: 3, color: 'yellow',
-        badge: 'สีเหลือง • ไม่แนะนำ (2 - 3 ชม.)',
-        rangeText: '2.0 - 3.0 ชั่วโมงหลังกิน',
-        title: 'อาหารกำลังเคลื่อนสู่ลำไส้เล็ก ยังไม่แนะนำให้นอนสนิท',
-        desc: 'กระเพาะย่อยอาหารไปได้ประมาณ 50-70% แล้ว หากเป็นมื้อเบาๆ อาจเริ่มออกกำลังกายเบาได้ แต่สำหรับมื้อหนักยังไม่ควรเข้านอนเพราะอาจหลับไม่สนิทและเกิดกรดไหลย้อนแฝง',
-        tip: 'หากง่วงนอนควรรออีกอย่างน้อย 1 ชั่วโมง หรือหนุนหมอนสูงหากจำเป็นต้องพักผ่อน'
+        start: 1, end: 2, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • ไม่แนะนำ',
+        rangeText: '1 – 2 ชั่วโมงหลังกิน',
+        heading: 'ยังไม่แนะนำให้เข้านอนหรือทานมื้อใหม่',
+        description: 'อาหารยังอยู่ในกระเพาะอาหารประมาณ 50–70% สามารถนั่งพักผ่อนหรือเดินช้าๆ ได้ แต่ยังไม่ควรออกกำลังกายหนักหรือเข้านอน'
       },
       {
-        start: 3, end: 4, color: 'green',
-        badge: 'สีเขียว • แนะนำ (3 - 4 ชม.)',
-        rangeText: '3.0 - 4.0 ชั่วโมงหลังกิน',
-        title: 'ปลอดภัยสำหรับเข้านอน และพร้อมออกกำลังกายเต็มรูปแบบ',
-        desc: 'กระเพาะอาหารระบายอาหารส่วนใหญ่ลงสู่ลำไส้เล็กแล้ว ระดับน้ำตาลและอินซูลินเริ่มกลับสู่ภาวะสมดุล สามารถเข้านอนได้อย่างสบายท้องหรือออกกำลังกายได้',
-        tip: 'เป็นระยะเวลาขั้นต่ำที่แนะนำให้เว้นก่อนเข้านอนหลังมื้อเย็น'
+        start: 2, end: 3, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำ',
+        rangeText: '2 – 3 ชั่วโมงหลังกิน',
+        heading: 'กระเพาะเริ่มย่อยได้ดี เดินย่อยหรือออกกำลังกายเบาได้',
+        description: 'อาหารส่วนใหญ่เคลื่อนสู่ลำไส้เล็กแล้ว สามารถออกกำลังกายระดับเบาถึงปานกลาง หรือเตรียมตัวเข้านอนหากเป็นมื้อเย็นขนาดเบา'
       },
       {
-        start: 4, end: 5, color: 'blue',
-        badge: 'สีฟ้า • ดีที่สุด (4 - 5 ชม.)',
-        rangeText: '4.0 - 5.0 ชั่วโมงหลังกิน',
-        title: 'จุดสมดุลที่ดีที่สุด! เหมาะทั้งเข้านอนและรับมื้อถัดไป',
-        desc: 'ระบบทำความสะอาดลำไส้เล็ก (Migrating Motor Complex - MMC) ทำงานสมบูรณ์ กระเพาะอาหารว่างพอดี ไม่มีอาหารตกค้าง เป็นเวลาที่ดีที่สุดในการเข้านอนหรือเริ่มทานมื้อหลักถัดไป',
-        tip: 'หากเป็นช่วงกลางวัน นี่คือจังหวะทองในการรับประทานอาหารมื้อถัดไปโดยไม่หิวโซ'
+        start: 3, end: 4, color: 'blue', icon: '💎',
+        statusText: 'สีฟ้า • ดีที่สุด',
+        rangeText: '3 – 4 ชั่วโมงหลังกิน',
+        heading: 'ดีที่สุดสำหรับการเข้านอนและออกกำลังกายเต็มที่',
+        description: 'กระเพาะอาหารย่อยอาหารเสร็จสมบูรณ์และว่างลงอย่างเหมาะสม ปลอดภัยจากกรดไหลย้อน หลับสนิท หรือพร้อมสำหรับการออกกำลังกายเต็มรูปแบบ'
       },
       {
-        start: 5, end: 6, color: 'green',
-        badge: 'สีเขียว • แนะนำ (5 - 6 ชม.)',
-        rangeText: '5.0 - 6.0 ชั่วโมงหลังกิน',
-        title: 'ช่วงเว้นมื้ออาหารที่เหมาะสม ร่างกายเริ่มดึงพลังงานสำรอง',
-        desc: 'ระดับอินซูลินลดลงสู่ระดับพื้นฐาน ร่างกายเริ่มเผาผลาญไขมันสะสมได้ดีขึ้น และเริ่มหลั่งฮอร์โมนความหิว (Ghrelin) อย่างเป็นธรรมชาติเพื่อเตรียมพร้อมสำหรับมื้อถัดไป',
-        tip: 'เหมาะอย่างยิ่งสำหรับมื้ออาหารต่อไป เตรียมเลือกอาหารที่มีโปรตีนและใยอาหารสูง'
+        start: 4, end: 6, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำ',
+        rangeText: '4 – 6 ชั่วโมงหลังกิน',
+        heading: 'ช่วงเวลาที่เหมาะสมสำหรับมื้ออาหารมื้อถัดไป',
+        description: 'ระดับน้ำตาลและอินซูลินกลับสู่ภาวะสมดุล ร่างกายพร้อมรับพลังงานในมื้อถัดไปได้อย่างมีประสิทธิภาพ'
       },
       {
-        start: 6, end: 8, color: 'yellow',
-        badge: 'สีเหลือง • เริ่มนานเกิน (6 - 8 ชม.)',
-        rangeText: '7.0 - 8.0 ชั่วโมงหลังกิน',
-        title: 'ปล่อยท้องว่างนาน เริ่มหิวจัดและเสี่ยงกินเร็วเกินไป',
-        desc: 'หากไม่ได้ตั้งใจทำ Intermittent Fasting (IF) การเว้นมื้อนาน 6-8 ชั่วโมงจะทำให้ระดับน้ำตาลในเลือดลดต่ำลง ส่งผลให้หิวจัด หน้ามืด และมีแนวโน้มกินเร็วหรือกินหวานจัดในมื้อถัดไป',
-        tip: 'ควรรีบรับประทานมื้ออาหาร โดยเริ่มจากโปรตีนและผักก่อนแป้งเพื่อกันน้ำตาลพุ่ง'
+        start: 6, end: 8, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • ไม่แนะนำ',
+        rangeText: '6 – 8 ชั่วโมงหลังกิน',
+        heading: 'เริ่มเว้นมื้อนานเกินไป ระวังหิวจัดและกินเกิน',
+        description: 'ระดับน้ำตาลในเลือดเริ่มลดต่ำลง ทำให้เกิดความอยากอาหารสูง หากปล่อยไว้นานกว่านี้อาจทำให้ทานมื้อถัดไปในปริมาณมากเกินพอดี'
       },
       {
-        start: 8, end: 10, color: 'red',
-        badge: 'สีแดง • นานเกินไปแล้ว (8 - 10 ชม.)',
-        rangeText: '8.0 - 10.0 ชั่วโมงหลังกิน',
-        title: 'ห้ามปล่อยท้องว่างนานเกินไป (ยกเว้นช่วงนอนหลับหรือทำ IF)',
-        desc: 'น้ำย่อยในกระเพาะอาหารที่ว่างเปล่าเป็นเวลานานอาจระคายเคืองเยื่อบุกระเพาะอาหาร เสี่ยงโรคกระเพาะ กรดเกิน และทำให้ระบบเผาผลาญชะลอตัวหากอดอาหารบ่อยครั้งในระหว่างวัน',
-        tip: 'ควรรับประทานอาหารย่อยง่ายทันที หลีกเลี่ยงอาหารรสจัด กาแฟดำ หรือของทอดตอนท้องว่างจัด'
+        start: 8, end: 10, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ห้าม / เว้นนานเกินไป',
+        rangeText: '8 – 10 ชั่วโมงหลังกิน',
+        heading: 'ปล่อยท้องว่างนานเกินไป (ยกเว้นช่วงนอนหลับ)',
+        description: 'น้ำย่อยในกระเพาะอาจระคายเคืองเยื่อบุกระเพาะอาหาร เสี่ยงโรคกระเพาะ อ่อนเพลีย หรือน้ำตาลในเลือดต่ำ (หากไม่ได้อยู่ในช่วงนอนหลับกลางคืน)'
       }
     ];
 
-    // MODE 3: 24-Hour Clock Meal Timing Guide (00:00 to 24:00, full 360 degrees)
-    // Green = แนะนำให้กิน, Yellow = อาจจะแนะนำ, Red = ไม่แนะนำให้กิน
+    // Mode 3: 24-Hour Normal Clock Meal Timing Guide
     const CLOCK24_ZONES = [
       {
-        startHour: 0, endHour: 6, color: 'red',
-        badge: 'สีแดง • ไม่แนะนำให้กิน',
-        rangeText: '00:00 - 06:00 น. (ช่วงดึกถึงเช้ามืด)',
-        title: 'ไม่แนะนำให้กิน! ช่วงเวลาพักฟื้นของระบบย่อยและฮอร์โมน',
-        desc: 'ร่างกายกำลังหลั่งเมลาโทนินและโกรทฮอร์โมนเพื่อซ่อมแซมเซลล์ ระบบย่อยอาหารและอินซูลินทำงานต่ำสุด การกินช่วงนี้ทำให้น้ำตาลสะสมเป็นไขมันและรบกวนการนอน',
-        tip: 'ดื่มได้เฉพาะน้ำเปล่า และรอรับประทานมื้อเช้าหลังเวลา 07:00 น.'
+        startHour: 0, endHour: 6, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ไม่แนะนำ',
+        rangeText: '00:00 – 06:00 น.',
+        heading: 'งดอาหาร ช่วงร่างกายซ่อมแซมและหลั่งโกรทฮอร์โมน',
+        description: 'ระบบย่อยอาหารเข้าสู่โหมดพักผ่อน การกินในช่วงนี้รบกวนการหลั่งเมลาโทนิน ทำให้หลับไม่สนิท และสะสมไขมันได้ง่ายที่สุด'
       },
       {
-        startHour: 6.0, endHour: 7.0, color: 'yellow',
-        badge: 'สีเหลือง • อาจจะแนะนำ',
-        rangeText: '06:00 - 07:00 น. (ช่วงตื่นนอนตอนเช้า)',
-        title: 'อาจจะแนะนำ: เหมาะสำหรับเครื่องดื่มอุ่นๆ หรือมื้อเบาๆ ก่อนออกกำลังกาย',
-        desc: 'ร่างกายเพิ่งตื่นนอน คอร์ติซอลกำลังเพิ่มขึ้นเพื่อปลุกร่างกาย หากต้องเดินทางหรือออกกำลังกายเช้า สามารถรองท้องด้วยกล้วยหอม นม หรือไข่ต้มได้',
-        tip: 'ดื่มน้ำเปล่า 1-2 แก้วหลังตื่นนอนเพื่อกระตุ้นระบบขับถ่ายก่อนเริ่มมื้อเช้า'
+        startHour: 6, endHour: 7, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • อาจจะแนะนำ',
+        rangeText: '06:00 – 07:00 น.',
+        heading: 'ช่วงตื่นนอน แนะนำดื่มน้ำอุ่นหรือรองท้องเบาๆ',
+        description: 'ร่างกายเพิ่งตื่นตัว ควรดื่มน้ำเปล่า 1–2 แก้วเพื่อกระตุ้นระบบขับถ่าย หากหิวสามารถทานอาหารย่อยง่ายปริมาณน้อยก่อนมื้อเช้าหลัก'
       },
       {
-        startHour: 7.0, endHour: 9.0, color: 'green',
-        badge: 'สีเขียว • แนะนำให้กิน (มื้อเช้า)',
-        rangeText: '07:00 - 09:00 น. (เวลาทองของมื้อเช้า)',
-        title: 'แนะนำให้กิน! ช่วงเวลาที่ดีที่สุดสำหรับอาหารมื้อเช้า',
-        desc: 'ตามนาฬิกาชีวภาพ (Circadian Rhythm) กระเพาะอาหารและลำไส้เล็กทำงานตื่นตัวสูงสุด ร่างกายมีความไวต่ออินซูลินดีที่สุด สามารถเปลี่ยนสารอาหารเป็นพลังงานได้เต็มที่',
-        tip: 'เน้นโปรตีนคุณภาพดี คาร์โบไฮเดรตเชิงซ้อน และไขมันดี เพื่อความอิ่มนานตลอดเช้า'
+        startHour: 7, endHour: 9.5, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำให้กิน',
+        rangeText: '07:00 – 09:30 น.',
+        heading: 'ช่วงเวลาที่ดีที่สุดสำหรับมื้อเช้า (Breakfast)',
+        description: 'ฮอร์โมนคอร์ติซอลและระบบเผาผลาญตื่นตัวเต็มที่ ควรทานมื้อเช้าที่เน้นโปรตีนและคาร์โบไฮเดรตเชิงซ้อนเพื่อเติมพลังงานให้สมอง'
       },
       {
-        startHour: 9.0, endHour: 10.0, color: 'yellow',
-        badge: 'สีเหลือง • อาจจะแนะนำ (มื้อสาย)',
-        rangeText: '09:00 - 10:00 น. (ช่วงสาย)',
-        title: 'อาจจะแนะนำ: สำหรับผู้ที่ตื่นสายหรือทำ IF 16/8',
-        desc: 'ยังสามารถทานมื้อเช้าแบบรวบยอด (Brunch) ได้ แต่ไม่ควรทานหนักจนเกินไป เพราะจะไปเบียดความหิวของมื้อกลางวันทำให้มื้อเที่ยงคลาดเคลื่อน',
-        tip: 'หากทานมื้อเช้าไปแล้ว ช่วงนี้ควรดื่มแค่น้ำเปล่าหรือชา/กาแฟไม่ใส่น้ำตาล'
+        startHour: 9.5, endHour: 11.5, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • อาจจะแนะนำ',
+        rangeText: '09:30 – 11:30 น.',
+        heading: 'ช่วงสาย ทานของว่างเบาๆ เฉพาะเมื่อหิวจริง',
+        description: 'หากทานมื้อเช้ามาแล้วควรให้กระเพาะได้พัก แต่ถ้าพลาดมื้อเช้าสามารถทานมื้อสายที่ย่อยง่ายเพื่อไม่ให้หิวจัดตอนเที่ยง'
       },
       {
-        startHour: 10.0, endHour: 11.5, color: 'red',
-        badge: 'สีแดง • ไม่แนะนำให้กิน',
-        rangeText: '10:00 - 11:30 น. (ก่อนมื้อกลางวัน)',
-        title: 'ไม่แนะนำให้กินจุกจิก! ใกล้เวลามื้อกลางวันเกินไป',
-        desc: 'การกินขนมหรือของว่างในช่วงนี้จะทำให้น้ำตาลในเลือดพุ่งสูงก่อนมื้อหลัก ส่งผลให้หมดความอยากอาหารที่มีประโยชน์ในมื้อเที่ยงและได้รับสารอาหารไม่ครบ',
-        tip: 'อดใจรออีกนิด ดื่มน้ำเปล่าเพื่อลดความอยากอาหารและเตรียมทานมื้อเที่ยงเวลา 11:30 น.'
+        startHour: 11.5, endHour: 13.5, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำให้กิน',
+        rangeText: '11:30 – 13:30 น.',
+        heading: 'ช่วงเวลาที่ดีสำหรับมื้อกลางวัน (Lunch)',
+        description: 'น้ำย่อยและเอนไซม์ทำงานเต็มประสิทธิภาพที่สุดของวัน เหมาะกับการทานมื้อหลักที่มีสารอาหารครบ 5 หมู่'
       },
       {
-        startHour: 11.5, endHour: 13.5, color: 'green',
-        badge: 'สีเขียว • แนะนำให้กิน (มื้อกลางวัน)',
-        rangeText: '11:30 - 13:30 น. (เวลาทองของมื้อกลางวัน)',
-        title: 'แนะนำให้กิน! ช่วงเวลาเหมาะสมสำหรับมื้อกลางวัน',
-        desc: 'ระบบเผาผลาญของร่างกายทำงานในระดับสูงสุดของวัน ร่างกายต้องการพลังงานเพื่อใช้ในช่วงบ่าย การกินมื้อเที่ยงตรงเวลาช่วยรักษาระดับน้ำตาลให้คงที่',
-        tip: 'แบ่งสัดส่วนจานอาหาร 2:1:1 (ผัก 2 ส่วน : ข้าวไม่ขัดสี 1 ส่วน : เนื้อสัตว์ไม่ติดมัน 1 ส่วน)'
+        startHour: 13.5, endHour: 17, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • อาจจะแนะนำ',
+        rangeText: '13:30 – 17:00 น.',
+        heading: 'ช่วงบ่าย แนะนำเฉพาะของว่างสุขภาพปริมาณน้อย',
+        description: 'หากหิวช่วงบ่ายสามารถทานถั่ว ผลไม้หวานน้อย หรือโยเกิร์ต หลีกเลี่ยงของหวานจัดและชานมไข่มุกที่ทำให้อินซูลินพุ่งสูง'
       },
       {
-        startHour: 13.5, endHour: 15.0, color: 'red',
-        badge: 'สีแดง • ไม่แนะนำให้กิน',
-        rangeText: '13:30 - 15:00 น. (ช่วงย่อยมื้อกลางวัน)',
-        title: 'ไม่แนะนำให้กินเพิ่ม! ปล่อยให้กระเพาะย่อยมื้อกลางวัน',
-        desc: 'เพิ่งผ่านมื้อกลางวันมาไม่นาน การกินของหวานหรือชานมไข่มุกทันทีหลังมื้อเที่ยงจะทำให้อินซูลินพุ่งสูงและเกิดอาการง่วงนอนช่วงบ่าย (Food Coma)',
-        tip: 'หากง่วงนอนให้ลุกเดินยืดเส้นยืดสายหรือดื่มน้ำเปล่าแทนการกินของหวาน'
+        startHour: 17, endHour: 19.5, color: 'green', icon: '✅',
+        statusText: 'สีเขียว • แนะนำให้กิน',
+        rangeText: '17:00 – 19:30 น.',
+        heading: 'ช่วงเวลาที่แนะนำสำหรับมื้อเย็น (Dinner)',
+        description: 'ทานมื้อเย็นให้เสร็จก่อนเข้านอนอย่างน้อย 3–4 ชั่วโมง เน้นผัก โปรตีนย่อยง่าย และลดแป้งขัดขาวเพื่อให้หลับสนิท'
       },
       {
-        startHour: 15.0, endHour: 16.0, color: 'yellow',
-        badge: 'สีเหลือง • อาจจะแนะนำ (ของว่างบ่าย)',
-        rangeText: '15:00 - 16:00 น. (ช่วงบ่าย)',
-        title: 'อาจจะแนะนำ: สามารถทานของว่างสุขภาพมื้อเล็กๆ ได้',
-        desc: 'เป็นช่วงที่มื้อเที่ยงย่อยไปเกือบหมดแล้ว หากรู้สึกหิวหรือต้องใช้สมองหนัก สามารถทานของว่างเบาๆ ที่ไม่หวานจัดเพื่อไม่ให้หิวโซในมื้อเย็น',
-        tip: 'แนะนำถั่วอบธรรมชาติ 1 กำมือ โยเกิร์ตรสธรรมชาติ หรือผลไม้หวานน้อย'
+        startHour: 19.5, endHour: 21, color: 'yellow', icon: '⚠️',
+        statusText: 'สีเหลือง • อาจจะแนะนำ',
+        rangeText: '19:30 – 21:00 น.',
+        heading: 'ช่วงค่ำ ควรทานเฉพาะอาหารเบาและย่อยง่ายเท่านั้น',
+        description: 'ระบบเผาผลาญเริ่มช้าลง หากจำเป็นต้องทานมื้อดึกให้เลือกอาหารปริมาณน้อยและย่อยง่าย เช่น ไข่ต้ม นมอุ่น หรือซุปใส'
       },
       {
-        startHour: 16.0, endHour: 17.0, color: 'red',
-        badge: 'สีแดง • ไม่แนะนำให้กิน',
-        rangeText: '16:00 - 17:00 น. (ก่อนมื้อเย็น)',
-        title: 'ไม่แนะนำให้กินรองท้อง! ใกล้เวลามื้อเย็นแล้ว',
-        desc: 'การกินขนมช่วงเย็นก่อนกลับบ้านมักทำให้ได้รับแคลอรีซ้ำซ้อน เพราะเมื่อถึงบ้านก็ยังทานมื้อเย็นร่วมกับครอบครัวอีก',
-        tip: 'เตรียมตัวสำหรับมื้อเย็นในช่วง 17:00 - 19:00 น.'
-      },
-      {
-        startHour: 17.0, endHour: 19.0, color: 'green',
-        badge: 'สีเขียว • แนะนำให้กิน (มื้อเย็น)',
-        rangeText: '17:00 - 19:00 น. (เวลาทองของมื้อเย็น)',
-        title: 'แนะนำให้กิน! ช่วงเวลาที่ดีที่สุดสำหรับมื้อเย็น',
-        desc: 'ช่วยให้ร่างกายมีเวลาอย่างน้อย 3-4 ชั่วโมงในการย่อยอาหารให้เสร็จสมบูรณ์ก่อนเข้านอน ลดความเสี่ยงกรดไหลย้อนและช่วยให้หลับลึกขึ้น',
-        tip: 'ลดปริมาณแป้งและของทอดในมื้อเย็น เน้นโปรตีนย่อยง่าย เช่น ปลา เต้าหู้ และผักลวก/ต้ม'
-      },
-      {
-        startHour: 19.0, endHour: 20.0, color: 'yellow',
-        badge: 'สีเหลือง • อาจจะแนะนำ (มื้อค่ำ)',
-        rangeText: '19:00 - 20:00 น. (ช่วงหัวค่ำ)',
-        title: 'อาจจะแนะนำ: ควรเลือกเฉพาะอาหารย่อยง่ายและปริมาณน้อย',
-        desc: 'ประสิทธิภาพการเผาผลาญเริ่มลดลงตามนาฬิกาชีวภาพ หากจำเป็นต้องทานช่วงนี้ควรลดปริมาณลงครึ่งหนึ่งจากมื้อปกติและเลื่อนเวลาเข้านอนออกไปให้ครบ 3-4 ชม.',
-        tip: 'หลีกเลี่ยงเนื้อแดง อาหารมันจัด และเครื่องดื่มที่มีคาเฟอีนหรือน้ำตาลสูง'
-      },
-      {
-        startHour: 20.0, endHour: 24.0, color: 'red',
-        badge: 'สีแดง • ไม่แนะนำให้กิน',
-        rangeText: '20:00 - 24:00 น. (มื้อดึก)',
-        title: 'ไม่แนะนำให้กิน! เสี่ยงกรดไหลย้อนและไขมันสะสม',
-        desc: 'ร่างกายเข้าสู่โหมดเตรียมพักผ่อน เมลาโทนินเริ่มหลั่ง ซึ่งยับยั้งการหลั่งอินซูลิน ทำให้ร่างกายจัดการกับน้ำตาลได้แย่ลงและรบกวนคุณภาพการนอนหลับ',
-        tip: 'ปิดครัวหลัง 20:00 น. หากหิวจริงๆ ให้ดื่มน้ำอุ่นหรือนมอุ่นไขมันต่ำเพียงเล็กน้อย'
+        startHour: 21, endHour: 24, color: 'red', icon: '🛑',
+        statusText: 'สีแดง • ไม่แนะนำ',
+        rangeText: '21:00 – 24:00 น.',
+        heading: 'ไม่แนะนำให้กิน เสี่ยงกรดไหลย้อนและอ้วนลงพุง',
+        description: 'ใกล้เวลาเข้านอน ระบบย่อยทำงานช้ามาก การกินหลัง 21:00 น. ทำให้เสี่ยงกรดไหลย้อน รบกวนคุณภาพการนอน และเพิ่มไขมันสะสม'
       }
     ];
 
-    /**
-     * ============================================================================
-     * APPLICATION STATE
-     * ============================================================================
-     */
-    let currentMode = 'eating'; // 'eating' | 'postmeal' | 'clock24'
+    // =========================================================================
+    // 3. APPLICATION STATE & TIMESTAMP PERSISTENCE
+    // =========================================================================
+    const defaultState = {
+      currentMode: 'eating', // 'eating' | 'postmeal' | 'clock24'
+      eating: {
+        isRunning: false,
+        startTimestamp: null,
+        accumulatedMs: 0
+      },
+      postmeal: {
+        isRunning: false,
+        startTimestamp: null,
+        accumulatedMs: 0
+      },
+      clock24: {
+        isSimulated: false,
+        simMinutes: 720 // 12:00
+      }
+    };
 
-    // Timer state for Mode 1 (Eating - in seconds, max 90*60 = 5400s)
-    let eatingSeconds = 0;
-    let eatingRunning = false;
+    let state = Object.assign({}, defaultState);
+    const saved = safeLoadState();
+    if (saved && typeof saved === 'object') {
+      if (saved.currentMode) state.currentMode = saved.currentMode;
+      if (saved.eating) state.eating = Object.assign({}, defaultState.eating, saved.eating);
+      if (saved.postmeal) state.postmeal = Object.assign({}, defaultState.postmeal, saved.postmeal);
+      if (saved.clock24) state.clock24 = Object.assign({}, defaultState.clock24, saved.clock24);
+    }
 
-    // Timer state for Mode 2 (Post-meal - in seconds, max 10*3600 = 36000s)
-    let postMealSeconds = 0;
-    let postMealRunning = false;
+    function persistState() {
+      safeSaveState(state);
+    }
 
-    // Simulator state for Mode 3 (24-Hour Clock)
-    let sim24Enabled = false;
-    let sim24Minutes = 720; // 12:00
+    function getElapsedMs(modeKey) {
+      const t = state[modeKey];
+      if (!t) return 0;
+      const base = Number(t.accumulatedMs) || 0;
+      if (t.isRunning && typeof t.startTimestamp === 'number') {
+        return Math.max(0, base + (Date.now() - t.startTimestamp));
+      }
+      return Math.max(0, base);
+    }
 
-    /**
-     * ============================================================================
-     * GEOMETRY & SVG RENDERING ENGINE
-     * ============================================================================
-     * Note on Coordinate Geometry:
-     * In SVG:
-     * - 0 degrees is 3 o'clock (right)
-     * - 90 degrees is 6 o'clock (bottom)
-     * - 180 degrees is 9 o'clock (left)
-     * - 270 degrees is 12 o'clock (top)
-     * 
-     * Requirement for Modes 1 & 2:
-     * - Start (0) at bottom (6 o'clock = 90° SVG)
-     * - Sweep 270 degrees clockwise to end (Max) at right (3 o'clock = 90° + 270° = 360° SVG)
-     */
-    function polarToCartesian(cx, cy, r, svgAngleDeg) {
-      const rad = (svgAngleDeg * Math.PI) / 180.0;
+    // =========================================================================
+    // 4. SVG GEOMETRY HELPERS (Guaranteed NaN-free)
+    // =========================================================================
+    function polarToCartesian(cx, cy, radius, angleInDegrees) {
+      const rad = (angleInDegrees * Math.PI) / 180.0;
       return {
-        x: cx + r * Math.cos(rad),
-        y: cy + r * Math.sin(rad)
+        x: cx + radius * Math.cos(rad),
+        y: cy + radius * Math.sin(rad)
       };
     }
 
-    function createArcPath(cx, cy, r, startSvgDeg, endSvgDeg) {
-      const start = polarToCartesian(cx, cy, r, startSvgDeg);
-      const end = polarToCartesian(cx, cy, r, endSvgDeg);
-      const sweepAngle = endSvgDeg - startSvgDeg;
-      const largeArcFlag = sweepAngle > 180 ? 1 : 0;
-      return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+    function createArcPath(cx, cy, radius, startAngle, endAngle) {
+      const start = polarToCartesian(cx, cy, radius, startAngle);
+      const end = polarToCartesian(cx, cy, radius, endAngle);
+      const sweepAngle = endAngle - startAngle;
+      const largeArcFlag = sweepAngle <= 180 ? '0' : '1';
+      return [
+        'M', start.x.toFixed(2), start.y.toFixed(2),
+        'A', radius, radius, 0, largeArcFlag, 1, end.x.toFixed(2), end.y.toFixed(2)
+      ].join(' ');
     }
 
-    function renderDial() {
-      const svg = document.getElementById('analog-dial-svg');
-      const cx = 200, cy = 200;
-      const outerR = 150;
-      const trackR = 130;
-      const tickOuterR = 138;
-      const numR = 100;
-
-      let html = `
-        <defs>
-          <radialGradient id="dialBgGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#162035" />
-            <stop offset="82%" stop-color="#0b111e" />
-            <stop offset="100%" stop-color="#060911" />
-          </radialGradient>
-          <filter id="handGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.75"/>
-          </filter>
-        </defs>
-
-        <!-- Outer Bezel -->
-        <circle cx="${cx}" cy="${cy}" r="${outerR + 8}" fill="#0f172a" stroke="#334155" stroke-width="1" />
-        <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="url(#dialBgGrad)" stroke="#1e293b" stroke-width="3" />
-      `;
-
-      if (currentMode === 'eating' || currentMode === 'postmeal') {
-        const isEating = currentMode === 'eating';
-        const maxVal = isEating ? 90 : 10;
-        const zones = isEating ? EATING_ZONES : POSTMEAL_ZONES;
-        const startBaseDeg = 90; // 6 o'clock
-        const totalSweepDeg = 270; // Clockwise to 3 o'clock (360 deg)
-
-        // Background 270° track
-        html += `<path d="${createArcPath(cx, cy, trackR, startBaseDeg, startBaseDeg + totalSweepDeg)}" fill="none" stroke="#1e293b" stroke-width="22" stroke-linecap="butt" />`;
-
-        // Color Zone Arcs
-        zones.forEach(z => {
-          const a1 = startBaseDeg + (z.start / maxVal) * totalSweepDeg;
-          const a2 = startBaseDeg + (z.end / maxVal) * totalSweepDeg;
-          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.88" />`;
-        });
-
-        // Subtle inner ring border
-        html += `<circle cx="${cx}" cy="${cy}" r="${tickOuterR + 3}" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1" />`;
-
-        // Ticks & Exo 2 Numbers
-        const totalSubTicks = isEating ? 90 : 40; // Every 1 min for eating, every 0.25 hr (15m) for postmeal
-        for (let i = 0; i <= totalSubTicks; i++) {
-          const val = (i / totalSubTicks) * maxVal;
-          const deg = startBaseDeg + (i / totalSubTicks) * totalSweepDeg;
-          const isMajor = isEating ? (i % 10 === 0) : (i % 4 === 0);
-          const isMedium = isEating ? (i % 5 === 0 && !isMajor) : (i % 2 === 0 && !isMajor);
-
-          const len = isMajor ? 14 : (isMedium ? 9 : 5);
-          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
-          const p2 = polarToCartesian(cx, cy, tickOuterR - len, deg);
-
-          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : (isMedium ? '#94a3b8' : '#475569')}" stroke-width="${isMajor ? 2.5 : (isMedium ? 1.5 : 1)}" stroke-linecap="round" />`;
-
-          if (isMajor) {
-            const labelNum = Math.round(val);
-            const pText = polarToCartesian(cx, cy, numR, deg);
-            html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="24" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
-          }
+    // =========================================================================
+    // 5. ZONE LOOKUP HELPERS
+    // =========================================================================
+    function getActiveEatingZone(minutes) {
+      const clamped = Math.max(0, Math.min(90, minutes));
+      for (let i = 0; i < EATING_ZONES.length; i++) {
+        const z = EATING_ZONES[i];
+        if (clamped >= z.start && (clamped < z.end || (i === EATING_ZONES.length - 1 && clamped <= z.end))) {
+          return z;
         }
-
-        // Start & End Anchor Labels in the open 90-degree quadrant (bottom-right area between 3 and 6 o'clock)
-        html += `
-          <text x="268" y="268" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-text">START 0 (6 น.)</text>
-          <text x="275" y="284" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-text">END ${maxVal} (3 น.)</text>
-        `;
-
-        // Unit Title inside dial (well away from digital screen)
-        html += `<text x="${cx}" y="${cy - 34}" fill="#94a3b8" font-size="12" text-anchor="middle" class="exo-dial-text tracking-widest">${isEating ? 'MINUTES (0-90)' : 'HOURS (0-10)'}</text>`;
-
-        // Compute Hand Angle
-        const currentVal = isEating ? (eatingSeconds / 60) : (postMealSeconds / 3600);
-        const clampedVal = Math.min(Math.max(currentVal, 0), maxVal);
-        const handDeg = startBaseDeg + (clampedVal / maxVal) * totalSweepDeg;
-        const activeZone = getActiveZone(clampedVal, zones);
-        const handColor = COLORS[activeZone.color].hex;
-
-        // Progress highlight arc
-        if (clampedVal > 0) {
-          html += `<path d="${createArcPath(cx, cy, trackR + 13, startBaseDeg, handDeg)}" fill="none" stroke="${handColor}" stroke-width="4" stroke-linecap="round" />`;
-        }
-
-        // Analog Hand
-        const tip = polarToCartesian(cx, cy, trackR + 8, handDeg);
-        const tail = polarToCartesian(cx, cy, 24, handDeg + 180);
-        html += `
-          <g filter="url(#handGlow)">
-            <line x1="${tail.x.toFixed(1)}" y1="${tail.y.toFixed(1)}" x2="${tip.x.toFixed(1)}" y2="${tip.y.toFixed(1)}" stroke="${handColor}" stroke-width="3.5" stroke-linecap="round" />
-            <circle cx="${cx}" cy="${cy}" r="10" fill="#0f172a" stroke="${handColor}" stroke-width="3.5" />
-            <circle cx="${cx}" cy="${cy}" r="12" fill="#999999" />
-          </g>
-        `;
-
-      } else {
-        // MODE 3: 24-Hour Normal Clock (00 at top 270° SVG, 06 at right 0°, 12 at bottom 90°, 18 at left 180°)
-        const startBaseDeg = 270; // 12 o'clock position represents 00:00 (Midnight)
-        
-        // Color Zones around 360 degrees
-        CLOCK24_ZONES.forEach(z => {
-          const a1 = startBaseDeg + (z.startHour / 24) * 360;
-          const a2 = startBaseDeg + (z.endHour / 24) * 360;
-          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.88" />`;
-        });
-
-        html += `<circle cx="${cx}" cy="${cy}" r="${tickOuterR + 3}" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1" />`;
-
-        // 24 Hour Ticks & Exo 2 Numbers (0 to 23)
-        for (let h = 0; h < 24; h++) {
-          const deg = startBaseDeg + (h / 24) * 360;
-          const isMajor = h % 2 === 0;
-          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
-          const p2 = polarToCartesian(cx, cy, tickOuterR - (isMajor ? 13 : 8), deg);
-
-          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : '#94a3b8'}" stroke-width="${isMajor ? 2.2 : 1.3}" stroke-linecap="round" />`;
-
-          // Half-hour tick
-          const halfDeg = deg + 7.5;
-          const hp1 = polarToCartesian(cx, cy, tickOuterR, halfDeg);
-          const hp2 = polarToCartesian(cx, cy, tickOuterR - 4, halfDeg);
-          html += `<line x1="${hp1.x.toFixed(1)}" y1="${hp1.y.toFixed(1)}" x2="${hp2.x.toFixed(1)}" y2="${hp2.y.toFixed(1)}" stroke="#475569" stroke-width="1" />`;
-
-          const pText = polarToCartesian(cx, cy, numR, deg);
-          const fontSize = (h % 6 === 0) ? 16 : 13;
-          const fillCol = (h % 6 === 0) ? '#ffffff' : '#cbd5e1';
-          html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="${fillCol}" font-size="${fontSize}" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${h}</text>`;
-        }
-
-        html += `<text x="${cx}" y="${cy - 32}" fill="#94a3b8" font-size="11" text-anchor="middle" class="exo-dial-text tracking-widest">24-HOUR CLOCK</text>`;
-
-        // Get current or simulated time
-        const timeObj = getMode3Time();
-        const decimalHour = timeObj.hours + timeObj.minutes / 60 + timeObj.seconds / 3600;
-        const activeZone = getActiveClock24Zone(decimalHour);
-        const zoneHex = COLORS[activeZone.color].hex;
-
-        // 24-Hour Hand
-        const hourDeg = startBaseDeg + (decimalHour / 24) * 360;
-        const hTip = polarToCartesian(cx, cy, numR + 15, hourDeg);
-        const hTail = polarToCartesian(cx, cy, 20, hourDeg + 180);
-
-        // Minute Hand (standard 60-min sweep from top 270°)
-        const minDeg = 270 + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
-        const mTip = polarToCartesian(cx, cy, tickOuterR - 2, minDeg);
-        const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
-
-        // Second Hand
-        const secDeg = 270 + (timeObj.seconds / 60) * 360;
-        const sTip = polarToCartesian(cx, cy, tickOuterR  + 1, secDeg);
-        const sTail = polarToCartesian(cx, cy, 28, secDeg + 180);
-
-        html += `
-          <g filter="url(#handGlow)">
-            <!-- Minute Hand -->
-            <line x1="${mTail.x.toFixed(1)}" y1="${mTail.y.toFixed(1)}" x2="${mTip.x.toFixed(1)}" y2="${mTip.y.toFixed(1)}" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
-            <!-- 24-Hour Hand (Primary Meal Indicator) -->
-            <line x1="${hTail.x.toFixed(1)}" y1="${hTail.y.toFixed(1)}" x2="${hTip.x.toFixed(1)}" y2="${hTip.y.toFixed(1)}" stroke="${zoneHex}" stroke-width="4.5" stroke-linecap="round" />
-            <!-- Second Hand -->
-            <line x1="${sTail.x.toFixed(1)}" y1="${sTail.y.toFixed(1)}" x2="${sTip.x.toFixed(1)}" y2="${sTip.y.toFixed(1)}" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" />
-            <!-- Center Cap -->
-            <circle cx="${cx}" cy="${cy}" r="9" fill="#0f172a" stroke="${zoneHex}" stroke-width="3" />
-            <circle cx="${cx}" cy="${cy}" r="12" fill="#999999" />
-          </g>
-        `;
       }
-
-      svg.innerHTML = html;
+      return EATING_ZONES[0];
     }
 
-    /**
-     * ============================================================================
-     * HELPER FUNCTIONS FOR ZONE MATCHING & UI UPDATES
-     * ============================================================================
-     */
-    function getActiveZone(val, zones) {
-      for (let i = 0; i < zones.length; i++) {
-        if (val >= zones[i].start && val < zones[i].end) {
-          return zones[i];
+    function getActivePostMealZone(hours) {
+      const clamped = Math.max(0, Math.min(10, hours));
+      for (let i = 0; i < POSTMEAL_ZONES.length; i++) {
+        const z = POSTMEAL_ZONES[i];
+        if (clamped >= z.start && (clamped < z.end || (i === POSTMEAL_ZONES.length - 1 && clamped <= z.end))) {
+          return z;
         }
       }
-      return zones[zones.length - 1];
+      return POSTMEAL_ZONES[0];
     }
 
     function getActiveClock24Zone(decimalHour) {
-      const h = decimalHour % 24;
+      const h = ((decimalHour % 24) + 24) % 24;
       for (let i = 0; i < CLOCK24_ZONES.length; i++) {
-        if (h >= CLOCK24_ZONES[i].startHour && h < CLOCK24_ZONES[i].endHour) {
-          return CLOCK24_ZONES[i];
+        const z = CLOCK24_ZONES[i];
+        if (h >= z.startHour && h < z.endHour) {
+          return z;
         }
       }
       return CLOCK24_ZONES[0];
     }
 
     function getMode3Time() {
-      if (sim24Enabled) {
-        const h = Math.floor(sim24Minutes / 60);
-        const m = sim24Minutes % 60;
-        return { hours: h, minutes: m, seconds: 0 };
+      if (state.clock24.isSimulated) {
+        const mins = Number(state.clock24.simMinutes) || 0;
+        const hours = Math.floor(mins / 60) % 24;
+        const minutes = Math.floor(mins % 60);
+        return { hours, minutes, seconds: 0 };
       }
       const now = new Date();
       return {
@@ -791,343 +691,562 @@
       };
     }
 
-    function pad2(n) {
-      return String(Math.floor(n)).padStart(2, '0');
+    // =========================================================================
+    // 6. ANALOG DIAL SVG RENDERER (Large & Thin Exo 2 Typography)
+    // =========================================================================
+    function renderDial() {
+      const svg = document.getElementById('analog-dial-svg');
+      if (!svg) return;
+
+      const cx = 210;
+      const cy = 210;
+      const outerR = 190;
+      const trackR = 162;
+      const tickOuterR = 146;
+      const numR = 112;
+
+      let html = `
+        <defs>
+          <radialGradient id="dialBezelGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="76%" stop-color="#0b1221" />
+            <stop offset="94%" stop-color="#162238" />
+            <stop offset="100%" stop-color="#060b16" />
+          </radialGradient>
+          <filter id="handGlow" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.7" />
+          </filter>
+        </defs>
+
+        <!-- Outer Bezel -->
+        <circle cx="${cx}" cy="${cy}" r="${outerR + 8}" fill="#050a15" stroke="#1e293b" stroke-width="2" />
+        <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="url(#dialBezelGrad)" stroke="rgba(148,163,184,0.18)" stroke-width="1.5" />
+      `;
+
+      if (state.currentMode === 'eating' || state.currentMode === 'postmeal') {
+        const isEating = state.currentMode === 'eating';
+        const maxVal = isEating ? 90 : 10;
+        const zones = isEating ? EATING_ZONES : POSTMEAL_ZONES;
+
+        // 270-degree sweep: Start 0 at 6 o'clock (90° SVG) -> End at 3 o'clock (360° SVG)
+        const startDeg = 90;
+        const sweepDeg = 270;
+
+        // Background 270-degree track
+        html += `<path d="${createArcPath(cx, cy, trackR, startDeg, startDeg + sweepDeg)}" fill="none" stroke="#1e293b" stroke-width="20" stroke-linecap="butt" />`;
+
+        // Color Zone Arcs
+        zones.forEach(z => {
+          const a1 = startDeg + (z.start / maxVal) * sweepDeg;
+          const a2 = startDeg + (z.end / maxVal) * sweepDeg;
+          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.9" />`;
+        });
+
+        // Subtle inner ring line
+        html += `<path d="${createArcPath(cx, cy, tickOuterR + 3, startDeg, startDeg + sweepDeg)}" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="1" />`;
+
+        // Ticks and Large Thin Exo 2 Numerals
+        // Eating: 0..90 (45 steps of 2 min; major every 10 min)
+        // Postmeal: 0..10 (40 steps of 0.25 hr; major every 1 hr)
+        const totalSteps = isEating ? 45 : 40;
+        for (let i = 0; i <= totalSteps; i++) {
+          const val = (i / totalSteps) * maxVal;
+          const deg = startDeg + (i / totalSteps) * sweepDeg;
+          const isMajor = isEating ? (i % 5 === 0) : (i % 4 === 0);
+          const isMid = isEating ? false : (i % 2 === 0 && !isMajor);
+
+          const tickLen = isMajor ? 14 : (isMid ? 9 : 6);
+          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
+          const p2 = polarToCartesian(cx, cy, tickOuterR - tickLen, deg);
+
+          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : '#64748b'}" stroke-width="${isMajor ? 2 : 1.1}" stroke-linecap="round" />`;
+
+          if (isMajor) {
+            const labelNum = Math.round(val);
+            const pText = polarToCartesian(cx, cy, numR, deg);
+            html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="27" font-weight="200" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
+          }
+        }
+
+        // Start & End Anchor Labels in open bottom-right quadrant (between 3 o'clock and 6 o'clock)
+        html += `
+          <text x="284" y="282" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-subtext">START 0 (6 น.)</text>
+          <text x="290" y="298" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-subtext">END ${maxVal} (3 น.)</text>
+          <text x="${cx}" y="${cy - 34}" fill="#94a3b8" font-size="11.5" text-anchor="middle" class="exo-dial-subtext">${isEating ? 'MINUTES (0–90)' : 'HOURS (0–10)'}</text>
+        `;
+
+        // Calculate Hand Angle
+        const elapsedMs = getElapsedMs(state.currentMode);
+        const currentVal = isEating ? (elapsedMs / 60000) : (elapsedMs / 3600000);
+        const clampedVal = Math.max(0, Math.min(maxVal, currentVal));
+        const handDeg = startDeg + (clampedVal / maxVal) * sweepDeg;
+
+        const activeZone = isEating ? getActiveEatingZone(currentVal) : getActivePostMealZone(currentVal);
+        const handHex = COLORS[activeZone.color].hex;
+
+        const tip = polarToCartesian(cx, cy, tickOuterR - 14, handDeg);
+        const tail = polarToCartesian(cx, cy, 24, handDeg + 180);
+
+        html += `
+          <g filter="url(#handGlow)">
+            <line x1="${tail.x.toFixed(1)}" y1="${tail.y.toFixed(1)}" x2="${tip.x.toFixed(1)}" y2="${tip.y.toFixed(1)}" stroke="${handHex}" stroke-width="3.5" stroke-linecap="round" />
+            <circle cx="${cx}" cy="${cy}" r="10" fill="#0f172a" stroke="${handHex}" stroke-width="3" />
+            <circle cx="${cx}" cy="${cy}" r="3.5" fill="#f8fafc" />
+          </g>
+        `;
+
+      } else {
+        // MODE 3: 24-Hour Full Circle Analog Clock (00 at top 270° SVG, 06 at right 0°, 12 at bottom 90°, 18 at left 180°)
+        const startBaseDeg = 270;
+        const numR24 = 114;
+
+        CLOCK24_ZONES.forEach(z => {
+          const a1 = startBaseDeg + (z.startHour / 24) * 360;
+          const a2 = startBaseDeg + (z.endHour / 24) * 360;
+          html += `<path d="${createArcPath(cx, cy, trackR, a1, a2)}" fill="none" stroke="${COLORS[z.color].hex}" stroke-width="20" stroke-opacity="0.88" />`;
+        });
+
+        html += `<circle cx="${cx}" cy="${cy}" r="${tickOuterR + 3}" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="1" />`;
+
+        for (let h = 0; h < 24; h++) {
+          const deg = startBaseDeg + (h / 24) * 360;
+          const isMajor = h % 2 === 0;
+          const p1 = polarToCartesian(cx, cy, tickOuterR, deg);
+          const p2 = polarToCartesian(cx, cy, tickOuterR - (isMajor ? 13 : 8), deg);
+
+          html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${isMajor ? '#f8fafc' : '#94a3b8'}" stroke-width="${isMajor ? 1.8 : 1.1}" stroke-linecap="round" />`;
+
+          // Half-hour tick
+          const halfDeg = deg + 7.5;
+          const hp1 = polarToCartesian(cx, cy, tickOuterR, halfDeg);
+          const hp2 = polarToCartesian(cx, cy, tickOuterR - 4, halfDeg);
+          html += `<line x1="${hp1.x.toFixed(1)}" y1="${hp1.y.toFixed(1)}" x2="${hp2.x.toFixed(1)}" y2="${hp2.y.toFixed(1)}" stroke="#475569" stroke-width="1" />`;
+
+          const pText = polarToCartesian(cx, cy, numR24, deg);
+          const isCardinal = (h % 6 === 0);
+          const fontSize = isCardinal ? 23 : (isMajor ? 18 : 15);
+          const fontWeight = isCardinal ? 300 : 200;
+          const fillCol = isCardinal ? '#ffffff' : (isMajor ? '#e2e8f0' : '#94a3b8');
+          const hourLabel = String(h);
+
+          html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="${fillCol}" font-size="${fontSize}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${hourLabel}</text>`;
+        }
+
+        html += `<text x="${cx}" y="${cy - 30}" fill="#94a3b8" font-size="11" text-anchor="middle" class="exo-dial-subtext">24-HOUR CLOCK</text>`;
+
+        const timeObj = getMode3Time();
+        const decimalHour = timeObj.hours + timeObj.minutes / 60 + timeObj.seconds / 3600;
+        const activeZone = getActiveClock24Zone(decimalHour);
+        const zoneHex = COLORS[activeZone.color].hex;
+
+        // 24-Hour Hand (1 revolution per 24 hours)
+        const hourDeg = startBaseDeg + (decimalHour / 24) * 360;
+        const hTip = polarToCartesian(cx, cy, numR24 - 24, hourDeg);
+        const hTail = polarToCartesian(cx, cy, 20, hourDeg + 180);
+
+        // Minute Hand (1 revolution per 60 minutes)
+        const minDeg = startBaseDeg + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
+        const mTip = polarToCartesian(cx, cy, tickOuterR - 14, minDeg);
+        const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
+
+        // Second Hand (1 revolution per 60 seconds)
+        const secDeg = startBaseDeg + (timeObj.seconds / 60) * 360;
+        const sTip = polarToCartesian(cx, cy, tickOuterR - 8, secDeg);
+        const sTail = polarToCartesian(cx, cy, 28, secDeg + 180);
+
+        html += `
+          <g filter="url(#handGlow)">
+            <!-- Hour Hand -->
+            <line x1="${hTail.x.toFixed(1)}" y1="${hTail.y.toFixed(1)}" x2="${hTip.x.toFixed(1)}" y2="${hTip.y.toFixed(1)}" stroke="${zoneHex}" stroke-width="4.5" stroke-linecap="round" />
+            <!-- Minute Hand -->
+            <line x1="${mTail.x.toFixed(1)}" y1="${mTail.y.toFixed(1)}" x2="${mTip.x.toFixed(1)}" y2="${mTip.y.toFixed(1)}" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" />
+            <!-- Second Hand -->
+            <line x1="${sTail.x.toFixed(1)}" y1="${sTail.y.toFixed(1)}" x2="${sTip.x.toFixed(1)}" y2="${sTip.y.toFixed(1)}" stroke="#38bdf8" stroke-width="1.3" stroke-linecap="round" />
+            <!-- Center Cap -->
+            <circle cx="${cx}" cy="${cy}" r="9" fill="#0f172a" stroke="${zoneHex}" stroke-width="2.8" />
+            <circle cx="${cx}" cy="${cy}" r="3" fill="#f8fafc" />
+          </g>
+        `;
+      }
+
+      svg.innerHTML = html;
+    }
+
+    // =========================================================================
+    // 7. DIGITAL CLOCK, CONTROLS & STATUS CARD UPDATER
+    // =========================================================================
+    function formatTwoDigits(num) {
+      return String(Math.floor(num)).padStart(2, '0');
     }
 
     function updateDigitalAndStatus() {
+      const digitalSub = document.getElementById('digital-sub-header');
       const digitalReadout = document.getElementById('digital-readout');
       const digitalExtra = document.getElementById('digital-extra-info');
-      const sliderValLabel = document.getElementById('slider-val-label');
+      const runningBadge = document.getElementById('running-badge');
+      const btnStartIcon = document.getElementById('btn-start-icon');
+      const btnStartLabel = document.getElementById('btn-start-label');
+      const btnStartPause = document.getElementById('btn-start-pause');
+
+      if (!digitalReadout) return;
 
       let activeZone;
 
-      if (currentMode === 'eating') {
-        const mins = Math.floor(eatingSeconds / 60);
-        const secs = eatingSeconds % 60;
-        digitalReadout.textContent = `${pad2(mins)}:${pad2(secs)}`;
-        const decMin = (eatingSeconds / 60).toFixed(1);
-        digitalExtra.textContent = `${decMin} นาที / สูงสุด 90.0 นาที`;
-        sliderValLabel.textContent = `${mins} นาที ${secs} วินาที`;
-        document.getElementById('time-slider').value = eatingSeconds;
+      if (state.currentMode === 'eating') {
+        const ms = getElapsedMs('eating');
+        const totalSeconds = Math.floor(ms / 1000);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        const decimalMins = ms / 60000;
 
-        activeZone = getActiveZone(eatingSeconds / 60, EATING_ZONES);
-      } else if (currentMode === 'postmeal') {
-        const hrs = Math.floor(postMealSeconds / 3600);
-        const mins = Math.floor((postMealSeconds % 3600) / 60);
-        const secs = postMealSeconds % 60;
-        digitalReadout.textContent = `${pad2(hrs)}:${pad2(mins)}:${pad2(secs)}`;
-        const decHr = (postMealSeconds / 3600).toFixed(2);
-        digitalExtra.textContent = `${decHr} ชั่วโมง / สูงสุด 10.00 ชั่วโมง`;
-        sliderValLabel.textContent = `${hrs} ชม. ${mins} นาที`;
-        document.getElementById('time-slider').value = postMealSeconds;
+        digitalSub.textContent = 'เวลาที่ผ่านไป (EATING TIMER • 0–90 MIN)';
+        digitalReadout.textContent = `${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
+        digitalExtra.textContent = `${decimalMins.toFixed(1)} นาที / หน้าปัดสูงสุด 90 นาที`;
 
-        activeZone = getActiveZone(postMealSeconds / 3600, POSTMEAL_ZONES);
+        activeZone = getActiveEatingZone(decimalMins);
+
+        const isRunning = state.eating.isRunning;
+        runningBadge.classList.toggle('hidden', !isRunning);
+        btnStartIcon.textContent = isRunning ? '⏸' : '▶';
+        btnStartLabel.textContent = isRunning ? 'หยุดชั่วคราว' : (ms > 0 ? 'นับเวลาต่อ' : 'เริ่มจับเวลา');
+        btnStartPause.className = isRunning
+          ? 'flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-amber-400 hover:bg-amber-300 active:scale-[0.99] text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer'
+          : 'flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-sky-500 hover:bg-sky-400 active:scale-[0.99] text-slate-950 shadow-lg shadow-sky-500/20 transition cursor-pointer';
+
+      } else if (state.currentMode === 'postmeal') {
+        const ms = getElapsedMs('postmeal');
+        const totalSeconds = Math.floor(ms / 1000);
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+        const decimalHrs = ms / 3600000;
+
+        digitalSub.textContent = 'เวลาหลังกินข้าว (POST-MEAL • 0–10 HR)';
+        digitalReadout.textContent = `${formatTwoDigits(hrs)}:${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
+        digitalExtra.textContent = `${decimalHrs.toFixed(2)} ชั่วโมง / หน้าปัดสูงสุด 10 ชั่วโมง`;
+
+        activeZone = getActivePostMealZone(decimalHrs);
+
+        const isRunning = state.postmeal.isRunning;
+        runningBadge.classList.toggle('hidden', !isRunning);
+        btnStartIcon.textContent = isRunning ? '⏸' : '▶';
+        btnStartLabel.textContent = isRunning ? 'หยุดชั่วคราว' : (ms > 0 ? 'นับเวลาต่อ' : 'เริ่มจับเวลา');
+        btnStartPause.className = isRunning
+          ? 'flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-amber-400 hover:bg-amber-300 active:scale-[0.99] text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer'
+          : 'flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-base bg-sky-500 hover:bg-sky-400 active:scale-[0.99] text-slate-950 shadow-lg shadow-sky-500/20 transition cursor-pointer';
+
       } else {
         const t = getMode3Time();
-        digitalReadout.textContent = `${pad2(t.hours)}:${pad2(t.minutes)}:${pad2(t.seconds)}`;
-        digitalExtra.textContent = sim24Enabled
-          ? `โหมดจำลองเวลา • ${pad2(t.hours)}:${pad2(t.minutes)} น.`
-          : `เวลาปัจจุบันเรียลไทม์ • วันนี้`;
+        const decimalHour = t.hours + t.minutes / 60 + t.seconds / 3600;
 
-        const decHr = t.hours + t.minutes / 60 + t.seconds / 3600;
-        activeZone = getActiveClock24Zone(decHr);
+        digitalSub.textContent = state.clock24.isSimulated
+          ? 'เวลาจำลอง 24 ชั่วโมง (SIMULATED CLOCK)'
+          : 'เวลาปัจจุบัน 24 ชั่วโมง (LIVE 24H CLOCK)';
+        digitalReadout.textContent = `${formatTwoDigits(t.hours)}:${formatTwoDigits(t.minutes)}:${formatTwoDigits(t.seconds)}`;
+        digitalExtra.textContent = state.clock24.isSimulated
+          ? 'กำลังดูช่วงเวลาจำลอง (กดปุ่มด้านล่างเพื่อกลับสู่เวลาจริง)'
+          : 'แสดงช่วงเวลาที่แนะนำในการรับประทานอาหารตลอด 24 ชั่วโมง';
+
+        runningBadge.classList.add('hidden');
+        activeZone = getActiveClock24Zone(decimalHour);
       }
 
-      // Update Digital Color Accent & Status Card
+      // Apply thin crisp color & subtle glow to Digital Readout
       const c = COLORS[activeZone.color];
       digitalReadout.style.color = c.hex;
-      digitalReadout.style.textShadow = `0 0 18px ${c.hex}66`;
+      digitalReadout.style.textShadow = `0 0 10px ${c.hex}55`;
 
+      // Update Status Advice Card
       const statusCard = document.getElementById('status-card');
-      statusCard.className = `glass-panel rounded-3xl p-5 sm:p-6 border-l-8 ${c.borderLeft} transition-all duration-300 flex-1 flex flex-col justify-between`;
+      const statusBadge = document.getElementById('status-badge');
+      const statusRange = document.getElementById('status-range');
+      const statusHeading = document.getElementById('status-heading');
+      const statusIcon = document.getElementById('status-icon');
+      const statusDesc = document.getElementById('status-description');
 
-      const dot = document.getElementById('status-dot');
-      dot.className = `w-3.5 h-3.5 rounded-full ${c.dot} ${c.shadow}`;
-
-      const badge = document.getElementById('status-badge');
-      badge.className = `text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${c.bg} ${c.text} border ${c.border}`;
-      badge.textContent = activeZone.badge;
-
-      document.getElementById('status-range').textContent = activeZone.rangeText;
-      document.getElementById('status-title').textContent = activeZone.title;
-      document.getElementById('status-desc').textContent = activeZone.desc;
-      document.getElementById('status-tip').innerHTML = `<strong class="text-white">คำแนะนำ:</strong> ${activeZone.tip}`;
+      statusCard.className = `bg-slate-900/85 backdrop-blur-md border-2 ${c.cardBorder} rounded-3xl p-5 sm:p-6 shadow-2xl transition-colors duration-300`;
+      statusBadge.className = `px-3 py-1 rounded-full text-xs sm:text-sm font-bold ${c.badgeBg} ${c.badgeText} border ${c.badgeBorder}`;
+      statusBadge.textContent = activeZone.statusText;
+      statusRange.textContent = `ช่วง ${activeZone.rangeText}`;
+      statusHeading.textContent = activeZone.heading;
+      statusIcon.textContent = activeZone.icon;
+      statusDesc.textContent = activeZone.description;
     }
 
-    function renderLegendAndGuide() {
-      const legendEl = document.getElementById('dial-legend');
-      const guideGrid = document.getElementById('guide-grid');
-      const guideHeading = document.getElementById('guide-heading');
-
-      if (currentMode === 'eating' || currentMode === 'postmeal') {
-        legendEl.className = 'w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs';
-        legendEl.innerHTML = `
-          <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-lg text-red-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ห้าม</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-amber-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span><span>สีเหลือง: ไม่แนะนำ</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-emerald-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำ</span>
-          </div>
-          <div class="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/30 px-2.5 py-1.5 rounded-lg text-sky-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 shrink-0"></span><span>สีฟ้า: ดีที่สุด</span>
-          </div>
-        `;
-
-        const zones = currentMode === 'eating' ? EATING_ZONES : POSTMEAL_ZONES;
-        guideHeading.textContent = currentMode === 'eating'
-          ? '📋 เกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลากินข้าว 0 - 90 นาที)'
-          : '📋 เกณฑ์สีและคำอธิบายเชิงลึก (โหมดจับเวลาหลังกินข้าว 0 - 10 ชั่วโมง)';
-
-        guideGrid.innerHTML = zones.map(z => {
-          const c = COLORS[z.color];
-          const jumpSec = currentMode === 'eating'
-            ? Math.round(((z.start + z.end) / 2) * 60)
-            : Math.round(((z.start + z.end) / 2) * 3600);
-          return `
-            <button onclick="jumpToTime(${jumpSec})" class="text-left p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border ${c.border} transition group flex flex-col justify-between gap-2">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-1.5">
-                  <span class="inline-flex items-center gap-1.5 text-xs font-bold ${c.text}">
-                    <span class="w-2 h-2 rounded-full ${c.dot}"></span>
-                    ${z.rangeText}
-                  </span>
-                  <span class="text-[11px] text-slate-500 group-hover:text-sky-400 transition">จำลอง ↗</span>
-                </div>
-                <div class="text-sm font-bold text-white mb-1">${z.badge.split('•')[1].trim()}</div>
-                <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${z.desc}</p>
-              </div>
-            </button>
-          `;
-        }).join('');
-
-      } else {
-        // 24-Hour Clock Legend (Green = แนะนำให้กิน, Yellow = อาจจะแนะนำ, Red = ไม่แนะนำให้กิน)
-        legendEl.className = 'w-full mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs';
-        legendEl.innerHTML = `
-          <div class="flex items-center justify-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-emerald-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำให้กิน</span>
-          </div>
-          <div class="flex items-center justify-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-amber-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span><span>สีเหลือง: อาจจะแนะนำ</span>
-          </div>
-          <div class="flex items-center justify-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-lg text-red-300">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ไม่แนะนำ</span>
-          </div>
-        `;
-
-        guideHeading.textContent = '📋 ตารางช่วงเวลามื้ออาหารตลอด 24 ชั่วโมง (คลิกเพื่อจำลองเวลาบนหน้าปัด)';
-        guideGrid.innerHTML = CLOCK24_ZONES.map(z => {
-          const c = COLORS[z.color];
-          const midMin = Math.round(((z.startHour + z.endHour) / 2) * 60);
-          return `
-            <button onclick="jumpToSim24(${midMin})" class="text-left p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border ${c.border} transition group flex flex-col justify-between gap-2">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-1.5">
-                  <span class="inline-flex items-center gap-1.5 text-xs font-bold ${c.text}">
-                    <span class="w-2 h-2 rounded-full ${c.dot}"></span>
-                    ${z.rangeText.split('(')[0].trim()}
-                  </span>
-                  <span class="text-[11px] text-slate-500 group-hover:text-sky-400 transition">ดูเวลา ↗</span>
-                </div>
-                <div class="text-sm font-bold text-white mb-1">${z.badge.split('•')[1].trim()}</div>
-                <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${z.title}</p>
-              </div>
-            </button>
-          `;
-        }).join('');
-      }
-    }
-
-    /**
-     * ============================================================================
-     * MODE SWITCHING & INTERACTION HANDLERS
-     * ============================================================================
-     */
-    function switchMode(mode) {
-      currentMode = mode;
-
-      // Update Tab Styles
-      document.querySelectorAll('.mode-tab').forEach(btn => {
-        btn.className = 'mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60';
+    // =========================================================================
+    // 8. MODE SWITCHING & STATIC UI BUILDERS
+    // =========================================================================
+    function renderModeStaticUI() {
+      // Update Tab Active States
+      const modes = ['eating', 'postmeal', 'clock24'];
+      modes.forEach(m => {
+        const tab = document.getElementById(`tab-${m}`);
+        if (!tab) return;
+        if (m === state.currentMode) {
+          tab.className = 'mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-semibold text-sm sm:text-base transition-all border bg-sky-500/20 border-sky-400 text-white shadow-lg shadow-sky-500/10 cursor-pointer';
+        } else {
+          tab.className = 'mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm sm:text-base transition-all border bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 cursor-pointer';
+        }
       });
-      const activeBtn = document.getElementById(`tab-${mode}`);
-      activeBtn.className = 'mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-500 text-slate-950 shadow-md shadow-sky-500/25';
 
-      // Configure Panels per Mode
-      const timerControls = document.getElementById('timer-controls');
-      const clock24Controls = document.getElementById('clock24-controls');
-      const slider = document.getElementById('time-slider');
+      const dialTitle = document.getElementById('dial-title');
+      const dialSub = document.getElementById('dial-subtitle');
+      const dialBadge = document.getElementById('dial-geometry-badge');
+      const dialLegend = document.getElementById('dial-legend');
+      const timerControls = document.getElementById('timer-controls-box');
+      const clock24Controls = document.getElementById('clock24-controls-box');
+      const quickAdjustRow = document.getElementById('quick-adjust-row');
+      const btnFinishEating = document.getElementById('btn-finish-eating');
+      const breakdownList = document.getElementById('zone-breakdown-list');
 
-      if (mode === 'eating') {
-        document.getElementById('dial-badge').textContent = 'หน้าปัด 0 - 90 นาที (กวาด 270°)';
-        document.getElementById('dial-title').textContent = 'หน้าปัดเข็มจับเวลากินข้าว';
-        document.getElementById('dial-geometry-hint').textContent = 'เริ่ม 6 นาฬิกา (0) → สุด 3 นาฬิกา (90)';
-        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: นาที : วินาที (MM:SS)';
-        document.getElementById('digital-sub-header').textContent = 'เวลาในการกินข้าว (EATING DURATION)';
+      if (state.currentMode === 'eating') {
+        dialTitle.textContent = 'หน้าปัดจับเวลากินข้าว (0 – 90 นาที)';
+        dialSub.textContent = 'เริ่มเลข 0 ที่ตำแหน่ง 6 นาฬิกา หมุนตามเข็ม 270° ถึงเลข 90 ที่ 3 นาฬิกา';
+        dialBadge.textContent = '270° • 0–90 นาที';
 
-        timerControls.classList.remove('hidden');
-        clock24Controls.classList.add('hidden');
-        clock24Controls.classList.remove('flex');
-
-        slider.max = 5400; // 90 mins
-        slider.step = 15;
-        slider.value = eatingSeconds;
-      } else if (mode === 'postmeal') {
-        document.getElementById('dial-badge').textContent = 'หน้าปัด 0 - 10 ชั่วโมง (กวาด 270°)';
-        document.getElementById('dial-title').textContent = 'หน้าปัดเข็มจับเวลาหลังกินข้าว';
-        document.getElementById('dial-geometry-hint').textContent = 'เริ่ม 6 นาฬิกา (0) → สุด 3 นาฬิกา (10)';
-        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: ชั่วโมง : นาที : วินาที';
-        document.getElementById('digital-sub-header').textContent = 'ระยะเวลาหลังมื้ออาหาร (POST-MEAL)';
+        dialLegend.className = 'w-full pt-3 mt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs';
+        dialLegend.innerHTML = `
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ห้าม</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0"></span><span>สีเหลือง: ไม่แนะนำ</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำ</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-sky-400 shrink-0"></span><span>สีฟ้า: ดีที่สุด</span></div>
+        `;
 
         timerControls.classList.remove('hidden');
         clock24Controls.classList.add('hidden');
-        clock24Controls.classList.remove('flex');
+        btnFinishEating.classList.remove('hidden');
 
-        slider.max = 36000; // 10 hours
-        slider.step = 300;  // 5 mins step
-        slider.value = postMealSeconds;
+        quickAdjustRow.innerHTML = `
+          <button type="button" onclick="adjustTimerMs(-300000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">-5 นาที</button>
+          <button type="button" onclick="adjustTimerMs(-60000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">-1 นาที</button>
+          <button type="button" onclick="adjustTimerMs(60000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">+1 นาที</button>
+          <button type="button" onclick="adjustTimerMs(300000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">+5 นาที</button>
+        `;
+
+        breakdownList.innerHTML = EATING_ZONES.map(z => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${COLORS[z.color].hex}"></span>
+              <span class="font-medium text-slate-200">${z.rangeText}</span>
+            </div>
+            <span class="text-slate-400 text-xs">${z.statusText.split('•')[1].trim()}</span>
+          </div>
+        `).join('');
+
+      } else if (state.currentMode === 'postmeal') {
+        dialTitle.textContent = 'หน้าปัดจับเวลาหลังกินข้าว (0 – 10 ชั่วโมง)';
+        dialSub.textContent = 'เริ่มเลข 0 ที่ตำแหน่ง 6 นาฬิกา หมุนตามเข็ม 270° ถึงเลข 10 ที่ 3 นาฬิกา';
+        dialBadge.textContent = '270° • 0–10 ชม.';
+
+        dialLegend.className = 'w-full pt-3 mt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs';
+        dialLegend.innerHTML = `
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ห้าม</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0"></span><span>สีเหลือง: ไม่แนะนำ</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำ</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-sky-400 shrink-0"></span><span>สีฟ้า: ดีที่สุด</span></div>
+        `;
+
+        timerControls.classList.remove('hidden');
+        clock24Controls.classList.add('hidden');
+        btnFinishEating.classList.add('hidden');
+
+        quickAdjustRow.innerHTML = `
+          <button type="button" onclick="adjustTimerMs(-1800000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">-30 นาที</button>
+          <button type="button" onclick="adjustTimerMs(-600000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">-10 นาที</button>
+          <button type="button" onclick="adjustTimerMs(600000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">+10 นาที</button>
+          <button type="button" onclick="adjustTimerMs(1800000)" class="py-2 px-2 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 cursor-pointer">+30 นาที</button>
+        `;
+
+        breakdownList.innerHTML = POSTMEAL_ZONES.map(z => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${COLORS[z.color].hex}"></span>
+              <span class="font-medium text-slate-200">${z.rangeText}</span>
+            </div>
+            <span class="text-slate-400 text-xs">${z.statusText.split('•')[1].trim()}</span>
+          </div>
+        `).join('');
+
       } else {
-        document.getElementById('dial-badge').textContent = 'หน้าปัด 24 ชั่วโมงเต็มวง (360°)';
-        document.getElementById('dial-title').textContent = 'หน้าปัดนาฬิกา 24 ชม. & ช่วงเวลาอาหาร';
-        document.getElementById('dial-geometry-hint').textContent = '00 น. ด้านบน • 12 น. ด้านล่าง';
-        document.getElementById('digital-unit-label').textContent = 'รูปแบบ: นาฬิกา 24 ชม. (HH:MM:SS)';
-        document.getElementById('digital-sub-header').textContent = 'เวลาปัจจุบัน / เวลาจำลอง (24-HOUR TIME)';
+        dialTitle.textContent = 'หน้าปัดนาฬิกาปกติ 24 ชั่วโมง (ช่วงเวลามื้ออาหาร)';
+        dialSub.textContent = 'แสดงเข็มหน้าปัด 24 ชั่วโมงเต็มวง (0–23) พร้อมแถบสีแนะนำช่วงมื้ออาหาร';
+        dialBadge.textContent = '360° • 24 ชม.';
+
+        dialLegend.className = 'w-full pt-3 mt-2 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs';
+        dialLegend.innerHTML = `
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span><span>สีเขียว: แนะนำให้กิน</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0"></span><span>สีเหลือง: อาจจะแนะนำ</span></div>
+          <div class="flex items-center gap-1.5 text-slate-300"><span class="w-3 h-3 rounded-full bg-red-500 shrink-0"></span><span>สีแดง: ไม่แนะนำ</span></div>
+        `;
 
         timerControls.classList.add('hidden');
         clock24Controls.classList.remove('hidden');
-        clock24Controls.classList.add('flex');
-      }
+        syncSimulatorControlsUI();
 
-      renderLegendAndGuide();
-      renderDial();
-      updateDigitalAndStatus();
-    }
-
-    function startTimer() {
-      if (currentMode === 'eating') {
-        eatingRunning = true;
-      } else if (currentMode === 'postmeal') {
-        postMealRunning = true;
+        breakdownList.innerHTML = CLOCK24_ZONES.map(z => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${COLORS[z.color].hex}"></span>
+              <span class="font-medium text-slate-200">${z.rangeText}</span>
+            </div>
+            <span class="text-slate-400 text-xs">${z.statusText.split('•')[1].trim()}</span>
+          </div>
+        `).join('');
       }
     }
 
-    function pauseTimer() {
-      if (currentMode === 'eating') {
-        eatingRunning = false;
-      } else if (currentMode === 'postmeal') {
-        postMealRunning = false;
+    // =========================================================================
+    // 9. USER INTERACTION HANDLERS
+    // =========================================================================
+    function switchMode(newMode) {
+      if (!['eating', 'postmeal', 'clock24'].includes(newMode)) return;
+      state.currentMode = newMode;
+      persistState();
+      renderModeStaticUI();
+      tickAll();
+    }
+
+    function toggleTimer() {
+      const modeKey = state.currentMode;
+      if (modeKey !== 'eating' && modeKey !== 'postmeal') return;
+
+      const t = state[modeKey];
+      if (t.isRunning) {
+        // Pause: capture exact elapsed ms into accumulatedMs
+        t.accumulatedMs = getElapsedMs(modeKey);
+        t.startTimestamp = null;
+        t.isRunning = false;
+      } else {
+        // Start / Resume: anchor to Date.now()
+        t.startTimestamp = Date.now();
+        t.isRunning = true;
       }
+
+      persistState();
+      tickAll();
     }
 
     function resetTimer() {
-      if (currentMode === 'eating') {
-        eatingRunning = false;
-        eatingSeconds = 0;
-      } else if (currentMode === 'postmeal') {
-        postMealRunning = false;
-        postMealSeconds = 0;
-      }
-      renderDial();
-      updateDigitalAndStatus();
+      const modeKey = state.currentMode;
+      if (modeKey !== 'eating' && modeKey !== 'postmeal') return;
+
+      state[modeKey] = {
+        isRunning: false,
+        startTimestamp: null,
+        accumulatedMs: 0
+      };
+
+      persistState();
+      tickAll();
     }
 
-    function onSliderInput(val) {
-      const num = parseInt(val, 10);
-      if (currentMode === 'eating') {
-        eatingSeconds = num;
-      } else if (currentMode === 'postmeal') {
-        postMealSeconds = num;
-      }
-      renderDial();
-      updateDigitalAndStatus();
-    }
+    function adjustTimerMs(deltaMs) {
+      const modeKey = state.currentMode;
+      if (modeKey !== 'eating' && modeKey !== 'postmeal') return;
 
-    function jumpToTime(seconds) {
-      if (currentMode === 'eating') {
-        eatingSeconds = Math.min(seconds, 5400);
-      } else if (currentMode === 'postmeal') {
-        postMealSeconds = Math.min(seconds, 36000);
-      }
-      renderDial();
-      updateDigitalAndStatus();
-    }
+      const maxMs = modeKey === 'eating' ? 90 * 60000 : 10 * 3600000;
+      const current = getElapsedMs(modeKey);
+      const next = Math.max(0, Math.min(maxMs, current + deltaMs));
 
-    function toggleSim24(checked) {
-      sim24Enabled = checked;
-      const box = document.getElementById('sim24-slider-box');
-      if (checked) {
-        box.classList.remove('hidden');
-        const now = new Date();
-        sim24Minutes = now.getHours() * 60 + now.getMinutes();
-        document.getElementById('sim24-slider').value = sim24Minutes;
-        document.getElementById('sim24-val-label').textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())} น.`;
+      const t = state[modeKey];
+      if (t.isRunning) {
+        t.accumulatedMs = next;
+        t.startTimestamp = Date.now();
       } else {
-        box.classList.add('hidden');
+        t.accumulatedMs = next;
+        t.startTimestamp = null;
       }
-      renderDial();
-      updateDigitalAndStatus();
+
+      persistState();
+      tickAll();
     }
 
-    function onSim24Input(val) {
-      sim24Minutes = parseInt(val, 10);
-      const h = Math.floor(sim24Minutes / 60);
-      const m = sim24Minutes % 60;
-      document.getElementById('sim24-val-label').textContent = `${pad2(h)}:${pad2(m)} น.`;
-      renderDial();
-      updateDigitalAndStatus();
+    function finishEatingAndStartPostMeal() {
+      // Stop eating timer and save final eating duration
+      if (state.eating.isRunning) {
+        state.eating.accumulatedMs = getElapsedMs('eating');
+        state.eating.startTimestamp = null;
+        state.eating.isRunning = false;
+      }
+
+      // Immediately start Post-Meal digestion timer from 0
+      state.postmeal = {
+        isRunning: true,
+        startTimestamp: Date.now(),
+        accumulatedMs: 0
+      };
+
+      state.currentMode = 'postmeal';
+      persistState();
+      renderModeStaticUI();
+      tickAll();
     }
 
-    function jumpToSim24(totalMinutes) {
-      const toggle = document.getElementById('sim24-toggle');
-      toggle.checked = true;
-      sim24Enabled = true;
-      document.getElementById('sim24-slider-box').classList.remove('hidden');
-      sim24Minutes = totalMinutes % 1440;
-      document.getElementById('sim24-slider').value = sim24Minutes;
-      const h = Math.floor(sim24Minutes / 60);
-      const m = sim24Minutes % 60;
-      document.getElementById('sim24-val-label').textContent = `${pad2(h)}:${pad2(m)} น.`;
-      renderDial();
-      updateDigitalAndStatus();
+    function syncSimulatorControlsUI() {
+      const btn = document.getElementById('sim-toggle');
+      const wrapper = document.getElementById('sim-slider-wrapper');
+      const slider = document.getElementById('sim-slider');
+      const badge = document.getElementById('sim-time-badge');
+
+      if (!btn || !wrapper) return;
+
+      if (state.clock24.isSimulated) {
+        btn.textContent = 'กำลังจำลองเวลา (คลิกใช้เวลาจริง)';
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/50 hover:bg-sky-500/30 transition cursor-pointer';
+        wrapper.classList.remove('hidden');
+        if (slider) slider.value = state.clock24.simMinutes;
+        const hrs = Math.floor(state.clock24.simMinutes / 60);
+        const mins = state.clock24.simMinutes % 60;
+        if (badge) badge.textContent = `จำลองเวลา: ${formatTwoDigits(hrs)}:${formatTwoDigits(mins)} น.`;
+      } else {
+        btn.textContent = 'ใช้เวลาจริง (Live)';
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition cursor-pointer';
+        wrapper.classList.add('hidden');
+      }
     }
 
-    /**
-     * ============================================================================
-     * MASTER 1-SECOND HEARTBEAT LOOP
-     * ============================================================================
-     */
-    setInterval(() => {
-      let needsRender = false;
-
-      if (eatingRunning && eatingSeconds < 5400) {
-        eatingSeconds++;
-        if (eatingSeconds >= 5400) eatingRunning = false;
-        if (currentMode === 'eating') needsRender = true;
+    function toggleSimulator() {
+      state.clock24.isSimulated = !state.clock24.isSimulated;
+      if (state.clock24.isSimulated) {
+        const now = new Date();
+        state.clock24.simMinutes = now.getHours() * 60 + now.getMinutes();
       }
+      persistState();
+      syncSimulatorControlsUI();
+      tickAll();
+    }
 
-      if (postMealRunning && postMealSeconds < 36000) {
-        postMealSeconds++;
-        if (postMealSeconds >= 36000) postMealRunning = false;
-        if (currentMode === 'postmeal') needsRender = true;
+    function onSimSliderInput(val) {
+      state.clock24.simMinutes = Number(val) || 0;
+      persistState();
+      syncSimulatorControlsUI();
+      tickAll();
+    }
+
+    // =========================================================================
+    // 10. MAIN RENDER LOOP & BACKGROUND VISIBILITY SYNC
+    // =========================================================================
+    function tickAll() {
+      renderDial();
+      updateDigitalAndStatus();
+      updatePersistenceIndicator(true);
+    }
+
+    // Immediate sync when returning from another app or unlocking screen
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        tickAll();
       }
+    });
+    window.addEventListener('focus', tickAll);
+    window.addEventListener('pageshow', tickAll);
 
-      if (currentMode === 'clock24' && !sim24Enabled) {
-        needsRender = true;
-      }
-
-      if (needsRender) {
-        renderDial();
-        updateDigitalAndStatus();
-      }
-    }, 1000);
-
-    // Initial Boot
+    // Initialize on DOMContentLoaded / window.onload
     window.addEventListener('DOMContentLoaded', () => {
-      switchMode('eating');
+      renderModeStaticUI();
+      tickAll();
+
+      // Update smoothly at ~10fps for fluid hand movement & accurate seconds
+      setInterval(tickAll, 100);
     });
   </script>
 </body>
