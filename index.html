@@ -156,7 +156,7 @@
         <button type="button" id="tab-postmeal" onclick="switchMode('postmeal')"
           class="mode-tab flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-medium text-sm sm:text-base transition-all border cursor-pointer">
           <span class="text-lg">⏳</span>
-          <span>2. จับเวลาหลังกินข้าว (0–10 ชม.)</span>
+          <span>2. จับเวลาหลังกินข้าว (0–12 ชม.)</span>
         </button>
 
         <button type="button" id="tab-clock24" onclick="switchMode('clock24')"
@@ -454,7 +454,7 @@
       }
     ];
 
-    // Mode 2: Post-Meal Digestion Timer (0 - 10 Hours)
+    // Mode 2: Post-Meal Digestion Timer (0 - 12 Hours)
     const POSTMEAL_ZONES = [
       {
         start: 0, end: 1, color: 'red', icon: '🛑',
@@ -499,9 +499,9 @@
         description: 'ระดับน้ำตาลในเลือดเริ่มลดต่ำลง ทำให้เกิดความอยากอาหารสูง หากปล่อยไว้นานกว่านี้อาจทำให้ทานมื้อถัดไปในปริมาณมากเกินพอดี'
       },
       {
-        start: 8, end: 10, color: 'red', icon: '🛑',
+        start: 8, end: 12, color: 'red', icon: '🛑',
         statusText: 'สีแดง • ห้าม / เว้นนานเกินไป',
-        rangeText: '8 – 10 ชั่วโมงหลังกิน',
+        rangeText: '8 – 12 ชั่วโมงหลังกิน',
         heading: 'ปล่อยท้องว่างนานเกินไป (ยกเว้นช่วงนอนหลับ)',
         description: 'น้ำย่อยในกระเพาะอาจระคายเคืองเยื่อบุกระเพาะอาหาร เสี่ยงโรคกระเพาะ อ่อนเพลีย หรือน้ำตาลในเลือดต่ำ (หากไม่ได้อยู่ในช่วงนอนหลับกลางคืน)'
       }
@@ -655,7 +655,7 @@
     }
 
     function getActivePostMealZone(hours) {
-      const clamped = Math.max(0, Math.min(10, hours));
+      const clamped = Math.max(0, Math.min(12, hours));
       for (let i = 0; i < POSTMEAL_ZONES.length; i++) {
         const z = POSTMEAL_ZONES[i];
         if (clamped >= z.start && (clamped < z.end || (i === POSTMEAL_ZONES.length - 1 && clamped <= z.end))) {
@@ -724,7 +724,7 @@
 
       if (state.currentMode === 'eating' || state.currentMode === 'postmeal') {
         const isEating = state.currentMode === 'eating';
-        const maxVal = isEating ? 90 : 10;
+        const maxVal = isEating ? 90 : 12;
         const zones = isEating ? EATING_ZONES : POSTMEAL_ZONES;
 
         // 270-degree sweep: Start 0 at 6 o'clock (90° SVG) -> End at 3 o'clock (360° SVG)
@@ -746,8 +746,8 @@
 
         // Ticks and Large Thin Exo 2 Numerals
         // Eating: 0..90 (45 steps of 2 min; major every 10 min)
-        // Postmeal: 0..10 (40 steps of 0.25 hr; major every 1 hr)
-        const totalSteps = isEating ? 45 : 40;
+        // Postmeal: 0..12 (48 steps of 0.25 hr; major every 1 hr)
+        const totalSteps = isEating ? 45 : 48;
         for (let i = 0; i <= totalSteps; i++) {
           const val = (i / totalSteps) * maxVal;
           const deg = startDeg + (i / totalSteps) * sweepDeg;
@@ -771,7 +771,7 @@
         html += `
           <text x="284" y="282" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-subtext">START 0 (6 น.)</text>
           <text x="290" y="298" fill="#64748b" font-size="11" text-anchor="middle" class="exo-dial-subtext">END ${maxVal} (3 น.)</text>
-          <text x="${cx}" y="${cy - 34}" fill="#94a3b8" font-size="11.5" text-anchor="middle" class="exo-dial-subtext">${isEating ? 'MINUTES (0–90)' : 'HOURS (0–10)'}</text>
+          <text x="${cx}" y="${cy - 34}" fill="#94a3b8" font-size="11.5" text-anchor="middle" class="exo-dial-subtext">${isEating ? 'MINUTES (0–90)' : 'HOURS (0–12)'}</text>
         `;
 
         // Calculate Hand Angle
@@ -899,7 +899,7 @@
         const decimalMins = ms / 60000;
 
         digitalSub.textContent = 'เวลาที่ผ่านไป (EATING TIMER • 0–90 MIN)';
-        digitalReadout.textContent = `${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
+        digitalReadout.textContent = `${formatTwoDigits(mins)}:${formatTwoDigits(secs)}.${String(Math.floor((ms % 1000) / 100))}`;
         digitalExtra.textContent = `${decimalMins.toFixed(1)} นาที / หน้าปัดสูงสุด 90 นาที`;
 
         activeZone = getActiveEatingZone(decimalMins);
@@ -920,9 +920,9 @@
         const secs = totalSeconds % 60;
         const decimalHrs = ms / 3600000;
 
-        digitalSub.textContent = 'เวลาหลังกินข้าว (POST-MEAL • 0–10 HR)';
-        digitalReadout.textContent = `${formatTwoDigits(hrs)}:${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
-        digitalExtra.textContent = `${decimalHrs.toFixed(2)} ชั่วโมง / หน้าปัดสูงสุด 10 ชั่วโมง`;
+        digitalSub.textContent = 'เวลาหลังกินข้าว (POST-MEAL • 0–12 HR)';
+        digitalReadout.textContent = `${formatTwoDigits(hrs)}:${formatTwoDigits(mins)}:${formatTwoDigits(secs)}.${Math.floor((ms % 1000) / 100)}`;
+        digitalExtra.textContent = `${decimalHrs.toFixed(2)} ชั่วโมง / หน้าปัดสูงสุด 12 ชั่วโมง`;
 
         activeZone = getActivePostMealZone(decimalHrs);
 
@@ -1033,9 +1033,9 @@
         `).join('');
 
       } else if (state.currentMode === 'postmeal') {
-        dialTitle.textContent = 'หน้าปัดจับเวลาหลังกินข้าว (0 – 10 ชั่วโมง)';
-        dialSub.textContent = 'เริ่มเลข 0 ที่ตำแหน่ง 6 นาฬิกา หมุนตามเข็ม 270° ถึงเลข 10 ที่ 3 นาฬิกา';
-        dialBadge.textContent = '270° • 0–10 ชม.';
+        dialTitle.textContent = 'หน้าปัดจับเวลาหลังกินข้าว (0 – 12 ชั่วโมง)';
+        dialSub.textContent = 'เริ่มเลข 0 ที่ตำแหน่ง 6 นาฬิกา หมุนตามเข็ม 270° ถึงเลข 12 ที่ 3 นาฬิกา';
+        dialBadge.textContent = '270° • 0–12 ชม.';
 
         dialLegend.className = 'w-full pt-3 mt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs';
         dialLegend.innerHTML = `
@@ -1143,7 +1143,7 @@
       const modeKey = state.currentMode;
       if (modeKey !== 'eating' && modeKey !== 'postmeal') return;
 
-      const maxMs = modeKey === 'eating' ? 90 * 60000 : 10 * 3600000;
+      const maxMs = modeKey === 'eating' ? 90 * 60000 : 12 * 3600000;
       const current = getElapsedMs(modeKey);
       const next = Math.max(0, Math.min(maxMs, current + deltaMs));
 
