@@ -134,7 +134,7 @@
             </h1>
           </div>
           <p class="text-xs sm:text-sm text-slate-400 mt-1">
-            จับเวลาการกินข้าว • ติดตามการย่อยหลังมื้ออาหาร • แนะนำช่วงเวลามื้ออาหาร 24 ชม. (นับต่ออัตโนมัติเมื่อสลับแอป)
+            จับเวลาการกินข้าว • ติดตามการย่อยหลังมื้ออาหาร • แนะนำช่วงเวลามื้ออาหาร 24 ชม. (นับต่ออัตโนมัติเมื่อสลับแอป) เหมาะสำหรับผู้ที่ต้องการควบคุมจังหวะการกินและการย่อยอาหารให้เหมาะสมต่อสุขภาพและตรงเวลามากที่สุด สามารถเปิดแอปอื่นหรือปิดหน้าจอมือถือได้หรือสามารถใช้มือถือระหว่างมื้ออาหารโดยไม่กระทบการนับเวลา
           </p>
         </div>
 
@@ -783,7 +783,7 @@
         const activeZone = isEating ? getActiveEatingZone(currentVal) : getActivePostMealZone(currentVal);
         const handHex = COLORS[activeZone.color].hex;
 
-        const tip = polarToCartesian(cx, cy, tickOuterR - 14, handDeg);
+        const tip = polarToCartesian(cx, cy, tickOuterR - 1, handDeg);
         const tail = polarToCartesian(cx, cy, 24, handDeg + 180);
 
         html += `
@@ -840,17 +840,17 @@
 
         // 24-Hour Hand (1 revolution per 24 hours)
         const hourDeg = startBaseDeg + (decimalHour / 24) * 360;
-        const hTip = polarToCartesian(cx, cy, numR24 - 24, hourDeg);
+        const hTip = polarToCartesian(cx, cy, numR24 + 10, hourDeg);
         const hTail = polarToCartesian(cx, cy, 20, hourDeg + 180);
 
         // Minute Hand (1 revolution per 60 minutes)
         const minDeg = startBaseDeg + ((timeObj.minutes + timeObj.seconds / 60) / 60) * 360;
-        const mTip = polarToCartesian(cx, cy, tickOuterR - 14, minDeg);
+        const mTip = polarToCartesian(cx, cy, tickOuterR - 1, minDeg);
         const mTail = polarToCartesian(cx, cy, 24, minDeg + 180);
 
         // Second Hand (1 revolution per 60 seconds)
         const secDeg = startBaseDeg + (timeObj.seconds / 60) * 360;
-        const sTip = polarToCartesian(cx, cy, tickOuterR - 8, secDeg);
+        const sTip = polarToCartesian(cx, cy, tickOuterR - 0, secDeg);
         const sTail = polarToCartesian(cx, cy, 28, secDeg + 180);
 
         html += `
