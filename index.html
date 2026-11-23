@@ -755,7 +755,7 @@
       const cy = 210;
       const outerR = 190;
       const trackR = 162;
-      const tickOuterR = 146;
+      const tickOuterR = 145;
       const numR = 112;
 
       let html = `
@@ -817,13 +817,13 @@
 
           if (isMajor) {
             const labelNum = Math.round(val);
-            const pText = polarToCartesian(cx, cy, isEating ? 104 : 112, deg);
+            const pText = polarToCartesian(cx, cy, isEating ? 110 : 115, deg);
             const majorSize = isEating ? 23 : 25;
             html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="${majorSize}" font-weight="400" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
           } else if (isEating && isMid) {
             // Smaller sub-numerals every 5 minutes (5, 15, 25, ..., 95) placed cleanly on outer-tick radius
             const subNum = Math.round(val);
-            const pSub = polarToCartesian(cx, cy, 125, deg);
+            const pSub = polarToCartesian(cx, cy, 115, deg);
             html += `<text x="${pSub.x.toFixed(1)}" y="${pSub.y.toFixed(1)}" fill="#94a3b8" font-size="12" font-weight="300" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${subNum}</text>`;
           }
         }
