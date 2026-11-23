@@ -47,7 +47,7 @@
       font-synthesis: none;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      font-size: clamp(4.4rem, 6.2vw, 5.3rem);
+      font-size: clamp(4.0rem, 6.2vw, 5.3rem);
       line-height: 1.02;
       letter-spacing: 0.05em;
       font-variant-numeric: tabular-nums;
@@ -754,8 +754,8 @@
       const cx = 210;
       const cy = 210;
       const outerR = 190;
-      const trackR = 162;
-      const tickOuterR = 145;
+      const trackR = 180;
+      const tickOuterR = 188;
       const numR = 112;
 
       let html = `
@@ -817,13 +817,13 @@
 
           if (isMajor) {
             const labelNum = Math.round(val);
-            const pText = polarToCartesian(cx, cy, isEating ? 110 : 115, deg);
+            const pText = polarToCartesian(cx, cy, isEating ? 150 : 150, deg);
             const majorSize = isEating ? 23 : 25;
             html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="${majorSize}" font-weight="400" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
           } else if (isEating && isMid) {
             // Smaller sub-numerals every 5 minutes (5, 15, 25, ..., 95) placed cleanly on outer-tick radius
             const subNum = Math.round(val);
-            const pSub = polarToCartesian(cx, cy, 115, deg);
+            const pSub = polarToCartesian(cx, cy, 155, deg);
             html += `<text x="${pSub.x.toFixed(1)}" y="${pSub.y.toFixed(1)}" fill="#94a3b8" font-size="12" font-weight="300" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${subNum}</text>`;
           }
         }
@@ -858,7 +858,7 @@
       } else {
         // MODE 3: 24-Hour Full Circle Analog Clock (0 at top 270° SVG, 6 at right 0°, 12 at bottom 90°, 18 at left 180°)
         const startBaseDeg = 270;
-        const numR24 = 114;
+        const numR24 = 150;
 
         CLOCK24_ZONES.forEach(z => {
           const a1 = startBaseDeg + (z.startHour / 24) * 360;
