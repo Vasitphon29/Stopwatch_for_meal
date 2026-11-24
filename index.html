@@ -1226,7 +1226,7 @@
         const decimalMins = ms / 60000;
 
         digitalSub.textContent = 'เวลาที่ผ่านไป (EATING TIMER • 0–100 MIN)';
-        digitalReadout.textContent = `${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
+        digitalReadout.textContent = `${formatTwoDigits(mins)}:${formatTwoDigits(secs)}.${formatTwoDigits(Math.floor((ms % 1000) / 10)).padStart(2, '0')}`;
         digitalExtra.textContent = `${decimalMins.toFixed(1)} นาที / หน้าปัดสูงสุด 100 นาที`;
 
         activeZone = getActiveEatingZone(decimalMins);
@@ -1248,7 +1248,7 @@
         const decimalHrs = ms / 3600000;
 
         digitalSub.textContent = 'เวลาหลังกินข้าว (POST-MEAL • 0–12 HR)';
-        digitalReadout.textContent = `${formatTwoDigits(hrs)}:${formatTwoDigits(mins)}:${formatTwoDigits(secs)}`;
+        digitalReadout.textContent = `${formatTwoDigits(hrs)}:${formatTwoDigits(mins)}:${formatTwoDigits(secs)}.${String(Math.floor((ms % 1000) / 10)).padStart(2, '0')}`;
         digitalExtra.textContent = `${decimalHrs.toFixed(2)} ชั่วโมง / หน้าปัดสูงสุด 12 ชั่วโมง`;
 
         activeZone = getActivePostMealZone(decimalHrs);
@@ -1268,7 +1268,7 @@
         digitalSub.textContent = state.clock24.isSimulated
           ? 'เวลาจำลอง 24 ชั่วโมง (SIMULATED CLOCK)'
           : 'เวลาปัจจุบัน 24 ชั่วโมง (LIVE 24H CLOCK)';
-        digitalReadout.textContent = `${formatTwoDigits(t.hours)}:${formatTwoDigits(t.minutes)}:${formatTwoDigits(t.seconds)}`;
+        digitalReadout.textContent = `${formatTwoDigits(t.hours)}:${formatTwoDigits(t.minutes)}:${formatTwoDigits(t.seconds)}.${formatTwoDigits(Math.floor((Date.now() % 1000) / 10)).padStart(2, '0')}`;
         digitalExtra.textContent = state.clock24.isSimulated
           ? 'กำลังดูช่วงเวลาจำลอง (กดปุ่มด้านล่างเพื่อกลับสู่เวลาจริง)'
           : 'แสดงช่วงเวลาที่แนะนำในการรับประทานอาหารตลอด 24 ชั่วโมง';
@@ -1630,7 +1630,7 @@
     function initApp() {
       renderModeStaticUI();
       tick();
-      window.setInterval(tick, 200);
+      window.setInterval(tick, 10);
     }
 
     if (document.readyState === 'loading') {
