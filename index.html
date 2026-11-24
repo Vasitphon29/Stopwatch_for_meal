@@ -916,13 +916,15 @@
 
       if (typeof state.chew.biteStartMs === 'number') {
         const elapsedSec = Math.max(0, (Date.now() - state.chew.biteStartMs) / 1000);
+        const remainSecDigital = Math.max(0, Math.floor(elapsedSec));
         const remainSec = Math.max(0, Math.ceil(CHEW_SECONDS - elapsedSec));
-        countdownEl.textContent = String(remainSec).padStart(2, '0');
+        
+        countdownEl.textContent = String(remainSecDigital).padStart(2, '0');
         countdownEl.classList.remove('done');
         statusEl.textContent = `กำลังเคี้ยวคำที่ ${state.chew.biteCount}... เคี้ยวช้าๆ อีก ${remainSec} วิ`;
         btnStart.innerHTML = '<span>▶</span><span>คำถัดไป (30 วิ)</span>';
       } else if (state.chew.biteCompleted) {
-        countdownEl.textContent = '00';
+        countdownEl.textContent = '30';
         countdownEl.classList.add('done');
         statusEl.textContent = `คำที่ ${state.chew.biteCount} ครบ 30 วิแล้ว! กลืนและพักช้อนสักครู่`;
         btnStart.innerHTML = '<span>▶</span><span>ตักคำถัดไป (30 วิ)</span>';
@@ -939,7 +941,7 @@
         if (elapsedSec >= CHEW_SECONDS && !state.chew.biteCompleted) {
           state.chew.biteStartMs = null;
           state.chew.biteCompleted = true;
-          countdownEl.textContent = '00';
+          countdownEl.textContent = '30';
           countdownEl.classList.add('done');
           statusEl.textContent = `คำที่ ${state.chew.biteCount} ครบ 30 วิแล้ว! กลืนและพักช้อนสักครู่`;
           btnStart.innerHTML = '<span>▶</span><span>ตักคำถัดไป (30 วิ)</span>';
@@ -1032,8 +1034,8 @@
       const cx = 210;
       const cy = 210;
       const outerR = 190;
-      const trackR = 162;
-      const tickOuterR = 146;
+      const trackR = 170;
+      const tickOuterR = 179;
 
       let html = `
         <defs>
@@ -1088,12 +1090,12 @@
 
           if (isMajor) {
             const labelNum = Math.round(val);
-            const pText = polarToCartesian(cx, cy, isEating ? 104 : 112, deg);
+            const pText = polarToCartesian(cx, cy, isEating ? 138 : 135, deg);
             const majorSize = isEating ? 23 : 25;
             html += `<text x="${pText.x.toFixed(1)}" y="${pText.y.toFixed(1)}" fill="#f8fafc" font-size="${majorSize}" font-weight="400" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${labelNum}</text>`;
           } else if (isEating && isMid) {
             const subNum = Math.round(val);
-            const pSub = polarToCartesian(cx, cy, 125, deg);
+            const pSub = polarToCartesian(cx, cy, 140, deg);
             html += `<text x="${pSub.x.toFixed(1)}" y="${pSub.y.toFixed(1)}" fill="#94a3b8" font-size="12" font-weight="300" text-anchor="middle" dominant-baseline="central" class="exo-dial-text">${subNum}</text>`;
           }
         }
@@ -1128,7 +1130,7 @@
       } else {
         // MODE 3: 24-Hour Full Circle Analog Clock (0 at top 270° SVG, NO leading zeros)
         const startBaseDeg = 270;
-        const numR24 = 114;
+        const numR24 = 130;
 
         CLOCK24_ZONES.forEach(z => {
           const a1 = startBaseDeg + (z.startHour / 24) * 360;
